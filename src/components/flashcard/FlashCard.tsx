@@ -1,6 +1,7 @@
 import React from 'react';
-import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { Button } from '../ui/Button';
 import { useTheme } from '../../context/ThemeContext';
 import { KanjiWithProgress } from '../../types';
 import { radius, spacing } from '../../theme';
@@ -18,7 +19,7 @@ export function FlashCard({ kanji, isFlipped, onFlip }: FlashCardProps) {
   const kanjiSize = scaledFontSize(typography.displayKanji.fontSize, fontScale);
 
   return (
-    <Pressable onPress={onFlip} style={styles.wrapper}>
+    <View style={styles.wrapper}>
       <View
         style={[
           styles.card,
@@ -48,9 +49,6 @@ export function FlashCard({ kanji, isFlipped, onFlip }: FlashCardProps) {
               ]}
             >
               {kanji.character}
-            </Text>
-            <Text style={[styles.hint, { color: colors.onSurfaceVariant }]}>
-              Tap to reveal
             </Text>
           </Animated.View>
         ) : (
@@ -86,8 +84,17 @@ export function FlashCard({ kanji, isFlipped, onFlip }: FlashCardProps) {
             ) : null}
           </Animated.View>
         )}
+
+        <View style={styles.footer}>
+          <Button
+            title={isFlipped ? 'Show Kanji' : 'Reveal Answer'}
+            variant={isFlipped ? 'outline' : 'primary'}
+            onPress={onFlip}
+            fullWidth
+          />
+        </View>
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -109,15 +116,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  footer: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   kanji: {
     textAlign: 'center',
-  },
-  hint: {
-    position: 'absolute',
-    bottom: spacing.lg,
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
   },
   meaning: {
     fontFamily: 'BeVietnamPro_700Bold',

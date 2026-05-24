@@ -111,7 +111,7 @@ export function StudyScreen() {
       <View style={styles.actions}>
         <Button
           title="Difficult"
-          variant="outline"
+          variant="warning"
           onPress={() => handleResult(false)}
           style={styles.actionBtn}
         />

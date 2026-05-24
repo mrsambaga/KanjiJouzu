@@ -10,7 +10,7 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { radius, spacing } from '../../theme';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'warning';
 
 interface ButtonProps {
   title: string;
@@ -62,6 +62,14 @@ export function Button({
         borderColor: colors.outlineVariant,
       },
       text: { color: colors.onSurface },
+    },
+    warning: {
+      container: {
+        backgroundColor: colors.errorContainer,
+        borderWidth: 1.5,
+        borderColor: colors.error,
+      },
+      text: { color: colors.error },
     },
   };
 

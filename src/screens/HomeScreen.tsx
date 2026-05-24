@@ -99,9 +99,10 @@ export function HomeScreen() {
         <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>Quick Actions</Text>
         <View style={styles.actions}>
           <Button title="Study N5" onPress={() => launchStudy({ type: 'jlpt', level: 'N5' })} fullWidth />
+          <Button title="Study N4" onPress={() => launchStudy({ type: 'jlpt', level: 'N4' })} fullWidth />
           <Button
             title="Review Difficult"
-            variant="secondary"
+            variant="warning"
             onPress={() => launchStudy({ type: 'difficult' })}
             fullWidth
           />

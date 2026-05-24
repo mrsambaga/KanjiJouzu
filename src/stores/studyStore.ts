@@ -41,7 +41,7 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   },
 
   flipCard: () => {
-    set({ showAnswer: true });
+    set({ showAnswer: !get().showAnswer });
   },
 
   recordSessionResult: (correct) => {
