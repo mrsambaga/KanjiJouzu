@@ -60,6 +60,12 @@ const SCHEMA = `
     result TEXT NOT NULL,
     reviewed_at TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS study_position (
+    source_key TEXT PRIMARY KEY,
+    current_index INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL
+  );
 `;
 
 const DEFAULT_SETTINGS: AppSettings = {

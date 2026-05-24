@@ -1,6 +1,7 @@
 import { getCustomDeck } from './deckService';
 import { getDifficultKanji, getRecentlyStudied } from './progressService';
 import { getKanjiWithProgress } from './kanjiService';
+import { getStudyPosition } from './studyPositionService';
 import { getDatabase, todayDateString } from '../db/database';
 import { KanjiWithProgress, JlptLevel, StudySource } from '../types';
 
@@ -37,6 +38,17 @@ export async function buildStudyQueue(source: StudySource): Promise<KanjiWithPro
     default:
       return [];
   }
+}
+
+export async function prepareStudySession(
+  source: StudySource,
+): Promise<{ queue: KanjiWithProgress[]; startIndex: number } | null> {
+  const queue = await buildStudyQueue(source);
+  if (queue.length === 0) return null;
+
+  const savedIndex = await getStudyPosition(source);
+  const startIndex = Math.min(Math.max(0, savedIndex), queue.length - 1);
+  return { queue, startIndex };
 }
 
 export async function getDailyGoalProgress(): Promise<{ studied: number; goal: number }> {

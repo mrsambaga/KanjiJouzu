@@ -10,7 +10,7 @@ import { Tag } from '../components/ui/Tag';
 import { useTheme } from '../context/ThemeContext';
 import { getDeckStats } from '../services/progressService';
 import { getCustomDecks } from '../services/deckService';
-import { buildStudyQueue } from '../services/studyService';
+import { prepareStudySession } from '../services/studyService';
 import { useStudyStore } from '../stores/studyStore';
 import { DeckStats, CustomDeck, JlptLevel } from '../types';
 import { RootStackParamList } from '../navigation/types';
@@ -76,9 +76,9 @@ export function CategoriesScreen() {
 
   const startLevel = async (level: JlptLevel) => {
     const source = { type: 'jlpt' as const, level };
-    const queue = await buildStudyQueue(source);
-    if (queue.length === 0) return;
-    startSession(source, queue);
+    const session = await prepareStudySession(source);
+    if (!session) return;
+    startSession(source, session.queue, session.startIndex);
     navigation.navigate('Study');
   };
 
@@ -110,9 +110,9 @@ export function CategoriesScreen() {
               deck={deck}
               onPress={async () => {
                 const source = { type: 'custom' as const, deckId: deck.id };
-                const queue = await buildStudyQueue(source);
-                if (queue.length === 0) return;
-                startSession(source, queue);
+                const session = await prepareStudySession(source);
+                if (!session) return;
+                startSession(source, session.queue, session.startIndex);
                 navigation.navigate('Study');
               }}
             />

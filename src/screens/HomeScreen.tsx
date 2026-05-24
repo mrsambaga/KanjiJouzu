@@ -10,7 +10,7 @@ import { ProgressRing } from '../components/ui/ProgressRing';
 import { Tag } from '../components/ui/Tag';
 import { useTheme } from '../context/ThemeContext';
 import { getStudyStreak } from '../services/statsService';
-import { getDailyGoalProgress, buildStudyQueue } from '../services/studyService';
+import { getDailyGoalProgress, prepareStudySession } from '../services/studyService';
 import { getRecentlyStudied } from '../services/progressService';
 import { getDeckStats } from '../services/progressService';
 import { useStudyStore } from '../stores/studyStore';
@@ -57,10 +57,10 @@ export function HomeScreen() {
     setRefreshing(false);
   };
 
-  const launchStudy = async (source: Parameters<typeof buildStudyQueue>[0]) => {
-    const queue = await buildStudyQueue(source);
-    if (queue.length === 0) return;
-    startSession(source, queue);
+  const launchStudy = async (source: Parameters<typeof prepareStudySession>[0]) => {
+    const session = await prepareStudySession(source);
+    if (!session) return;
+    startSession(source, session.queue, session.startIndex);
     navigation.navigate('Study');
   };
 

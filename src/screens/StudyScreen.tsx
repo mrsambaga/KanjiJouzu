@@ -27,11 +27,15 @@ export function StudyScreen() {
   const flipCard = useStudyStore((s) => s.flipCard);
   const recordSessionResult = useStudyStore((s) => s.recordSessionResult);
   const nextCard = useStudyStore((s) => s.nextCard);
+  const navigateNext = useStudyStore((s) => s.navigateNext);
+  const navigatePrevious = useStudyStore((s) => s.navigatePrevious);
   const endSession = useStudyStore((s) => s.endSession);
 
   const current = queue[currentIndex];
-  const progress = queue.length > 0 ? sessionTotal / queue.length : 0;
+  const deckProgress = queue.length > 0 ? (currentIndex + 1) / queue.length : 0;
   const sessionComplete = !isActive && sessionTotal > 0;
+  const canGoNext = currentIndex < queue.length - 1;
+  const canGoPrevious = currentIndex > 0;
 
   React.useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', () => {
@@ -92,7 +96,7 @@ export function StudyScreen() {
         <Text style={[styles.counter, { color: colors.onSurfaceVariant }]}>
           {currentIndex + 1} / {queue.length}
         </Text>
-        <ProgressBar progress={progress} height={6} />
+        <ProgressBar progress={deckProgress} height={6} />
       </View>
 
       <View style={styles.cardArea}>
@@ -102,11 +106,17 @@ export function StudyScreen() {
             kanji={current}
             isFlipped={showAnswer}
             onFlip={flipCard}
-            onSwipeRight={() => handleResult(true)}
-            onSwipeLeft={() => handleResult(false)}
+            onSwipeNext={navigateNext}
+            onSwipePrevious={navigatePrevious}
+            canGoNext={canGoNext}
+            canGoPrevious={canGoPrevious}
           />
         )}
       </View>
+
+      <Text style={[styles.swipeHint, { color: colors.onSurfaceVariant }]}>
+        Swipe to browse · Use buttons to mark progress
+      </Text>
 
       <View style={styles.actions}>
         <Button
@@ -142,6 +152,12 @@ const styles = StyleSheet.create({
   cardArea: {
     flex: 1,
     justifyContent: 'center',
+  },
+  swipeHint: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
   },
   actions: {
     flexDirection: 'row',

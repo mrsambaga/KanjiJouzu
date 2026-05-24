@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { KanjiWithProgress, StudySource } from '../types';
+import { resetStudyPosition, saveStudyPosition } from '../services/studyPositionService';
 
 interface StudyState {
   isActive: boolean;
@@ -10,11 +11,18 @@ interface StudyState {
   sessionCorrect: number;
   sessionTotal: number;
   startedAt: string | null;
-  startSession: (source: StudySource, kanji: KanjiWithProgress[]) => void;
+  startSession: (source: StudySource, kanji: KanjiWithProgress[], startIndex?: number) => void;
   flipCard: () => void;
   recordSessionResult: (correct: boolean) => void;
   nextCard: () => void;
+  navigateNext: () => void;
+  navigatePrevious: () => void;
   endSession: () => void;
+}
+
+function persistIndex(source: StudySource | null, index: number) {
+  if (!source) return;
+  saveStudyPosition(source, index).catch(console.warn);
 }
 
 export const useStudyStore = create<StudyState>((set, get) => ({
@@ -27,17 +35,19 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   sessionTotal: 0,
   startedAt: null,
 
-  startSession: (source, kanji) => {
+  startSession: (source, kanji, startIndex = 0) => {
+    const index = Math.min(Math.max(0, startIndex), Math.max(0, kanji.length - 1));
     set({
       isActive: true,
       source,
       queue: kanji,
-      currentIndex: 0,
+      currentIndex: index,
       showAnswer: false,
       sessionCorrect: 0,
       sessionTotal: 0,
       startedAt: new Date().toISOString(),
     });
+    persistIndex(source, index);
   },
 
   flipCard: () => {
@@ -53,15 +63,36 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   },
 
   nextCard: () => {
-    const { currentIndex, queue } = get();
+    const { currentIndex, queue, source } = get();
     if (currentIndex >= queue.length - 1) {
+      if (source) resetStudyPosition(source).catch(console.warn);
       set({ isActive: false, showAnswer: false });
       return;
     }
-    set({ currentIndex: currentIndex + 1, showAnswer: false });
+    const newIndex = currentIndex + 1;
+    set({ currentIndex: newIndex, showAnswer: false });
+    persistIndex(source, newIndex);
+  },
+
+  navigateNext: () => {
+    const { currentIndex, queue, source } = get();
+    if (currentIndex >= queue.length - 1) return;
+    const newIndex = currentIndex + 1;
+    set({ currentIndex: newIndex, showAnswer: false });
+    persistIndex(source, newIndex);
+  },
+
+  navigatePrevious: () => {
+    const { currentIndex, source } = get();
+    if (currentIndex <= 0) return;
+    const newIndex = currentIndex - 1;
+    set({ currentIndex: newIndex, showAnswer: false });
+    persistIndex(source, newIndex);
   },
 
   endSession: () => {
+    const { source, currentIndex } = get();
+    persistIndex(source, currentIndex);
     set({
       isActive: false,
       source: null,

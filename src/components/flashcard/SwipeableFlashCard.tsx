@@ -21,29 +21,33 @@ interface SwipeableFlashCardProps {
   kanji: KanjiWithProgress;
   isFlipped: boolean;
   onFlip: () => void;
-  onSwipeLeft: () => void;
-  onSwipeRight: () => void;
+  onSwipeNext: () => void;
+  onSwipePrevious: () => void;
+  canGoNext: boolean;
+  canGoPrevious: boolean;
 }
 
 export function SwipeableFlashCard({
   kanji,
   isFlipped,
   onFlip,
-  onSwipeLeft,
-  onSwipeRight,
+  onSwipeNext,
+  onSwipePrevious,
+  canGoNext,
+  canGoPrevious,
 }: SwipeableFlashCardProps) {
   const { colors } = useTheme();
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
 
   const triggerHaptic = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleSwipeComplete = (direction: 'left' | 'right') => {
     triggerHaptic();
-    if (direction === 'right') onSwipeRight();
-    else onSwipeLeft();
+    if (direction === 'left') onSwipeNext();
+    else onSwipePrevious();
   };
 
   const pan = Gesture.Pan()
@@ -52,15 +56,15 @@ export function SwipeableFlashCard({
       translateY.value = e.translationY * 0.2;
     })
     .onEnd((e) => {
-      if (e.translationX > SWIPE_THRESHOLD) {
-        translateX.value = withTiming(400, { duration: 200 }, () => {
-          runOnJS(handleSwipeComplete)('right');
+      if (e.translationX < -SWIPE_THRESHOLD && canGoNext) {
+        translateX.value = withTiming(-400, { duration: 200 }, () => {
+          runOnJS(handleSwipeComplete)('left');
           translateX.value = 0;
           translateY.value = 0;
         });
-      } else if (e.translationX < -SWIPE_THRESHOLD) {
-        translateX.value = withTiming(-400, { duration: 200 }, () => {
-          runOnJS(handleSwipeComplete)('left');
+      } else if (e.translationX > SWIPE_THRESHOLD && canGoPrevious) {
+        translateX.value = withTiming(400, { duration: 200 }, () => {
+          runOnJS(handleSwipeComplete)('right');
           translateX.value = 0;
           translateY.value = 0;
         });
@@ -81,21 +85,25 @@ export function SwipeableFlashCard({
     };
   });
 
-  const leftOverlay = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [-SWIPE_THRESHOLD, 0], [1, 0], 'clamp'),
+  const nextOverlay = useAnimatedStyle(() => ({
+    opacity: canGoNext
+      ? interpolate(translateX.value, [-SWIPE_THRESHOLD, 0], [1, 0], 'clamp')
+      : 0,
   }));
 
-  const rightOverlay = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [0, SWIPE_THRESHOLD], [0, 1], 'clamp'),
+  const prevOverlay = useAnimatedStyle(() => ({
+    opacity: canGoPrevious
+      ? interpolate(translateX.value, [0, SWIPE_THRESHOLD], [0, 1], 'clamp')
+      : 0,
   }));
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.overlay, styles.leftOverlay, leftOverlay]}>
-        <Text style={[styles.overlayText, { color: colors.error }]}>Difficult</Text>
+      <Animated.View style={[styles.overlay, styles.leftOverlay, nextOverlay]}>
+        <Text style={[styles.overlayText, { color: colors.primary }]}>Next →</Text>
       </Animated.View>
-      <Animated.View style={[styles.overlay, styles.rightOverlay, rightOverlay]}>
-        <Text style={[styles.overlayText, { color: colors.success }]}>Remembered</Text>
+      <Animated.View style={[styles.overlay, styles.rightOverlay, prevOverlay]}>
+        <Text style={[styles.overlayText, { color: colors.tertiary }]}>← Previous</Text>
       </Animated.View>
 
       <GestureDetector gesture={pan}>
@@ -128,6 +136,6 @@ const styles = StyleSheet.create({
   },
   overlayText: {
     fontFamily: 'BeVietnamPro_700Bold',
-    fontSize: 20,
+    fontSize: 18,
   },
 });
