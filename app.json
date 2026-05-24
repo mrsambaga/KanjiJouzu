@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Kanji Jouzu",
+    "slug": "kanji-jouzu",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#fff8f7"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.personal.kanjijouzu"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#fff8f7"
+      },
+      "package": "com.personal.kanjijouzu"
+    },
+    "plugins": ["expo-font", "expo-sqlite"]
+  }
+}

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KanjiFlow - Study Session</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Noto+Serif+JP:wght@400&amp;family=Be+Vietnam+Pro:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#c7c7bc",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#92001c",
+                        "surface-tint": "#bb152c",
+                        "on-secondary-fixed": "#1b1c15",
+                        "primary-fixed": "#ffdad8",
+                        "inverse-surface": "#3e2c2b",
+                        "surface": "#fff8f7",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#ffb3b1",
+                        "secondary-container": "#e4e3d7",
+                        "tertiary-fixed-dim": "#c4c4df",
+                        "surface-dim": "#f1d3d2",
+                        "surface-container-highest": "#f9dcda",
+                        "on-tertiary-fixed-variant": "#43455b",
+                        "surface-container-high": "#ffe1e0",
+                        "tertiary-fixed": "#e0e0fc",
+                        "tertiary-container": "#71738b",
+                        "surface-container-low": "#fff0ef",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#64655c",
+                        "primary-container": "#db313f",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#5b403f",
+                        "on-surface": "#271717",
+                        "inverse-on-surface": "#ffedeb",
+                        "secondary": "#5e5f56",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#271717",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#fffbff",
+                        "background": "#fff8f7",
+                        "outline": "#8f6f6e",
+                        "on-secondary-fixed-variant": "#46473f",
+                        "primary": "#b7102a",
+                        "tertiary": "#595a71",
+                        "on-primary-fixed": "#410007",
+                        "outline-variant": "#e4bebc",
+                        "on-primary-container": "#fffbff",
+                        "secondary-fixed": "#e4e3d7",
+                        "on-tertiary-fixed": "#181a2e",
+                        "inverse-primary": "#ffb3b1",
+                        "surface-container": "#ffe9e8",
+                        "surface-bright": "#fff8f7",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#f9dcda"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-padding": "24px",
+                        "stack-gap-sm": "12px",
+                        "touch-target-min": "48px",
+                        "stack-gap-lg": "40px",
+                        "stack-gap-md": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter", "sans-serif"],
+                        "label-sm": ["Inter", "sans-serif"],
+                        "display-kanji": ["Noto Serif JP", "serif"],
+                        "headline-md": ["Be Vietnam Pro", "sans-serif"],
+                        "headline-lg-mobile": ["Be Vietnam Pro", "sans-serif"],
+                        "headline-lg": ["Be Vietnam Pro", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "display-kanji": ["80px", {"lineHeight": "96px", "letterSpacing": "0.05em", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(43, 45, 66, 0.08);
+        }
+        
+        /* Front/Back Card Flip Animation */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        
+        #flashcard-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        
+        .is-flipped #flashcard-inner {
+            transform: rotateY(180deg);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased overflow-hidden">
+<!-- Top Navigation / Progress Header (Task-focused, suppressed main navs) -->
+<header class="w-full px-container-padding py-stack-gap-sm flex items-center justify-between z-10 relative">
+<button aria-label="Close Study Session" class="h-touch-target-min w-touch-target-min flex items-center justify-center text-on-surface hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined text-2xl">close</span>
+</button>
+<div class="flex-1 max-w-[200px] mx-4 flex flex-col items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">12 / 25</span>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-300 ease-out" style="width: 48%;"></div>
+</div>
+</div>
+<button aria-label="Options" class="h-touch-target-min w-touch-target-min flex items-center justify-center text-on-surface hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined text-2xl">more_vert</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full flex flex-col items-center justify-center px-container-padding relative">
+<!-- Flashcard Container -->
+<div class="w-full max-w-[400px] aspect-[3/4] relative perspective-1000 cursor-pointer group" onclick="this.classList.toggle('is-flipped')">
+<div class="w-full h-full relative transform-style-3d" id="flashcard-inner">
+<!-- Front of Card (Kanji) -->
+<div class="absolute inset-0 w-full h-full bg-surface-container-lowest rounded-[32px] card-shadow border border-surface-container-highest flex flex-col items-center justify-center backface-hidden z-20">
+<div class="flex-1 flex items-center justify-center">
+<span class="font-display-kanji text-display-kanji text-on-surface select-none">水</span>
+</div>
+<div class="pb-8 opacity-60 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant animate-bounce">touch_app</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-widest uppercase">Tap to reveal</span>
+</div>
+</div>
+<!-- Back of Card (Meaning/Reading) -->
+<div class="absolute inset-0 w-full h-full bg-surface-container-lowest rounded-[32px] card-shadow border border-surface-container-highest flex flex-col items-center justify-between p-8 backface-hidden rotate-y-180 z-10">
+<!-- Readings -->
+<div class="w-full flex flex-col items-center gap-4 mt-4">
+<div class="flex gap-4 mb-2">
+<div class="px-4 py-1.5 bg-secondary-container text-on-secondary-container rounded-full font-label-sm text-label-sm">Onyomi: スイ</div>
+<div class="px-4 py-1.5 bg-primary-container text-on-primary-container rounded-full font-label-sm text-label-sm">Kunyomi: みず</div>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface text-center mt-2">Water</h2>
+<span class="font-body-md text-body-md text-on-surface-variant">mizu, sui</span>
+</div>
+<!-- Example -->
+<div class="w-full bg-surface p-6 rounded-2xl border border-surface-container-highest flex flex-col gap-2">
+<p class="font-body-lg text-body-lg text-on-surface">水を飲みます。</p>
+<p class="font-body-md text-body-md text-on-surface-variant">I drink water.</p>
+</div>
+<!-- Action Gestures Hint -->
+<div class="w-full flex justify-between items-center px-4 mb-2 opacity-50">
+<div class="flex flex-col items-center gap-1 text-error">
+<span class="material-symbols-outlined text-3xl">close</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Swipe</span>
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-3xl fill">check_circle</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Decorative ambient shadow overlay (Ma principle) -->
+<div class="fixed inset-0 pointer-events-none z-[-1]" style="background: radial-gradient(circle at 50% 50%, transparent 0%, rgba(241, 211, 210, 0.2) 100%);"></div>
+</body></html>

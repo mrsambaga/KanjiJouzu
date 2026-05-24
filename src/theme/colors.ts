@@ -1,0 +1,87 @@
+export const lightColors = {
+  background: '#fff8f7',
+  surface: '#fff8f7',
+  surfaceDim: '#f1d3d2',
+  surfaceContainerLowest: '#ffffff',
+  surfaceContainerLow: '#fff0ef',
+  surfaceContainer: '#ffe9e8',
+  surfaceContainerHigh: '#ffe1e0',
+  surfaceContainerHighest: '#f9dcda',
+  onBackground: '#271717',
+  onSurface: '#271717',
+  onSurfaceVariant: '#5b403f',
+  primary: '#b7102a',
+  onPrimary: '#ffffff',
+  primaryContainer: '#db313f',
+  onPrimaryContainer: '#fffbff',
+  secondary: '#5e5f56',
+  onSecondary: '#ffffff',
+  secondaryContainer: '#e4e3d7',
+  onSecondaryContainer: '#64655c',
+  tertiary: '#595a71',
+  outline: '#8f6f6e',
+  outlineVariant: '#e4bebc',
+  error: '#ba1a1a',
+  onError: '#ffffff',
+  success: '#4a7c59',
+  onSuccess: '#ffffff',
+  inverseSurface: '#3e2c2b',
+  shadow: 'rgba(43, 45, 66, 0.08)',
+} as const;
+
+export const darkColors = {
+  background: '#1a1212',
+  surface: '#1a1212',
+  surfaceDim: '#2a2020',
+  surfaceContainerLowest: '#1f1717',
+  surfaceContainerLow: '#251c1c',
+  surfaceContainer: '#2c2222',
+  surfaceContainerHigh: '#332828',
+  surfaceContainerHighest: '#3a2e2e',
+  onBackground: '#ffedeb',
+  onSurface: '#ffedeb',
+  onSurfaceVariant: '#d4b8b6',
+  primary: '#ffb3b1',
+  onPrimary: '#410007',
+  primaryContainer: '#92001c',
+  onPrimaryContainer: '#ffdad8',
+  secondary: '#c7c7bc',
+  onSecondary: '#1b1c15',
+  secondaryContainer: '#46473f',
+  onSecondaryContainer: '#e4e3d7',
+  tertiary: '#c4c4df',
+  outline: '#a08887',
+  outlineVariant: '#5b403f',
+  error: '#ffb4ab',
+  onError: '#690005',
+  success: '#6db87d',
+  onSuccess: '#0a2e14',
+  inverseSurface: '#ffedeb',
+  shadow: 'rgba(0, 0, 0, 0.3)',
+} as const;
+
+export type ThemeColors = typeof lightColors;
+
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 24,
+  xl: 40,
+  containerPadding: 24,
+  touchTarget: 48,
+} as const;
+
+export const radius = {
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  full: 9999,
+} as const;
+
+export const fontScale = {
+  small: 0.85,
+  medium: 1,
+  large: 1.15,
+} as const;
