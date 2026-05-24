@@ -23,6 +23,10 @@
       },
       "package": "com.personal.kanjijouzu"
     },
-    "plugins": ["expo-font", "expo-sqlite"]
+    "plugins": [
+      "expo-font",
+      "expo-sqlite",
+      "expo-asset"
+    ]
   }
 }
