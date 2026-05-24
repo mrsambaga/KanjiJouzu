@@ -1,11 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useTheme } from '../../context/ThemeContext';
 import { KanjiWithProgress } from '../../types';
 import { radius, spacing } from '../../theme';
@@ -20,72 +15,77 @@ interface FlashCardProps {
 export function FlashCard({ kanji, isFlipped, onFlip }: FlashCardProps) {
   const { colors, typography, fontScale, scaledFontSize } = useTheme();
   const showRomaji = useSettingsStore((s) => s.showRomaji);
-  const rotation = useSharedValue(0);
-
-  React.useEffect(() => {
-    rotation.value = withTiming(isFlipped ? 180 : 0, { duration: 400 });
-  }, [isFlipped, rotation]);
-
-  const frontStyle = useAnimatedStyle(() => ({
-    transform: [{ rotateY: `${rotation.value}deg` }],
-    opacity: interpolate(rotation.value, [0, 90, 180], [1, 0, 0]),
-  }));
-
-  const backStyle = useAnimatedStyle(() => ({
-    transform: [{ rotateY: `${rotation.value - 180}deg` }],
-    opacity: interpolate(rotation.value, [0, 90, 180], [0, 0, 1]),
-  }));
-
   const kanjiSize = scaledFontSize(typography.displayKanji.fontSize, fontScale);
 
   return (
     <Pressable onPress={onFlip} style={styles.wrapper}>
-      <View style={[styles.card, { borderColor: colors.outlineVariant, backgroundColor: colors.surfaceContainerLowest }]}>
-        <Animated.View style={[styles.face, frontStyle]}>
-          <Text
-            style={[
-              styles.kanji,
-              {
-                fontFamily: typography.displayKanji.fontFamily,
-                fontSize: kanjiSize,
-                color: colors.onSurface,
-                letterSpacing: typography.displayKanji.letterSpacing,
-              },
-            ]}
+      <View
+        style={[
+          styles.card,
+          {
+            borderColor: colors.outlineVariant,
+            backgroundColor: colors.surfaceContainerLowest,
+          },
+        ]}
+      >
+        {!isFlipped ? (
+          <Animated.View
+            key="front"
+            entering={FadeIn.duration(200)}
+            exiting={FadeOut.duration(150)}
+            style={styles.face}
           >
-            {kanji.character}
-          </Text>
-          <Text style={[styles.hint, { color: colors.onSurfaceVariant }]}>
-            Tap to reveal
-          </Text>
-        </Animated.View>
-
-        <Animated.View style={[styles.face, styles.back, backStyle]}>
-          <Text style={[styles.meaning, { color: colors.onSurface }]}>{kanji.meaning}</Text>
-          {showRomaji && (
-            <Text style={[styles.romaji, { color: colors.primary }]}>{kanji.romaji}</Text>
-          )}
-          {kanji.onyomi && (
-            <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>
-              On: {kanji.onyomi}
+            <Text
+              style={[
+                styles.kanji,
+                {
+                  fontFamily: typography.displayKanji.fontFamily,
+                  fontSize: kanjiSize,
+                  lineHeight: kanjiSize * 1.2,
+                  color: colors.onSurface,
+                  letterSpacing: typography.displayKanji.letterSpacing,
+                },
+              ]}
+            >
+              {kanji.character}
             </Text>
-          )}
-          {kanji.kunyomi && (
-            <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>
-              Kun: {kanji.kunyomi}
+            <Text style={[styles.hint, { color: colors.onSurfaceVariant }]}>
+              Tap to reveal
             </Text>
-          )}
-          {kanji.example && (
-            <View style={[styles.exampleBox, { backgroundColor: colors.surfaceContainer }]}>
-              <Text style={[styles.example, { color: colors.onSurface }]}>{kanji.example}</Text>
-              {kanji.exampleMeaning && (
-                <Text style={[styles.exampleMeaning, { color: colors.onSurfaceVariant }]}>
-                  {kanji.exampleMeaning}
-                </Text>
-              )}
-            </View>
-          )}
-        </Animated.View>
+          </Animated.View>
+        ) : (
+          <Animated.View
+            key="back"
+            entering={FadeIn.duration(200)}
+            exiting={FadeOut.duration(150)}
+            style={styles.face}
+          >
+            <Text style={[styles.meaning, { color: colors.onSurface }]}>{kanji.meaning}</Text>
+            {showRomaji && (
+              <Text style={[styles.romaji, { color: colors.primary }]}>{kanji.romaji}</Text>
+            )}
+            {kanji.onyomi ? (
+              <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>
+                On: {kanji.onyomi}
+              </Text>
+            ) : null}
+            {kanji.kunyomi ? (
+              <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>
+                Kun: {kanji.kunyomi}
+              </Text>
+            ) : null}
+            {kanji.example ? (
+              <View style={[styles.exampleBox, { backgroundColor: colors.surfaceContainer }]}>
+                <Text style={[styles.example, { color: colors.onSurface }]}>{kanji.example}</Text>
+                {kanji.exampleMeaning ? (
+                  <Text style={[styles.exampleMeaning, { color: colors.onSurfaceVariant }]}>
+                    {kanji.exampleMeaning}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+          </Animated.View>
+        )}
       </View>
     </Pressable>
   );
@@ -98,21 +98,17 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   card: {
-    minHeight: 320,
+    width: '100%',
+    aspectRatio: 3 / 4,
     borderRadius: radius.xl,
     borderWidth: 1,
-    padding: spacing.lg,
     overflow: 'hidden',
   },
   face: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
-    backfaceVisibility: 'hidden',
-  },
-  back: {
-    transform: [{ rotateY: '180deg' }],
   },
   kanji: {
     textAlign: 'center',

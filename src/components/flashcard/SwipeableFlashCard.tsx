@@ -99,7 +99,7 @@ export function SwipeableFlashCard({
       </Animated.View>
 
       <GestureDetector gesture={pan}>
-        <Animated.View style={cardStyle}>
+        <Animated.View style={[styles.cardWrapper, cardStyle]}>
           <FlashCard kanji={kanji} isFlipped={isFlipped} onFlip={onFlip} />
         </Animated.View>
       </GestureDetector>
@@ -111,6 +111,9 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     alignItems: 'center',
+  },
+  cardWrapper: {
+    width: '100%',
   },
   overlay: {
     position: 'absolute',
