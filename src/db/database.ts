@@ -69,6 +69,19 @@ const DEFAULT_SETTINGS: AppSettings = {
   onboardingComplete: false,
 };
 
+type SettingKey = 'darkMode' | 'showRomaji' | 'fontSize' | 'onboardingComplete';
+
+const SETTING_KEYS: SettingKey[] = [
+  'darkMode',
+  'showRomaji',
+  'fontSize',
+  'onboardingComplete',
+];
+
+function isSettingKey(key: string): key is SettingKey {
+  return (SETTING_KEYS as readonly string[]).includes(key);
+}
+
 async function seedKanji(database: SQLite.SQLiteDatabase): Promise<void> {
   const row = await database.getFirstAsync<{ count: number }>(
     'SELECT COUNT(*) AS count FROM kanji',
@@ -105,11 +118,11 @@ async function seedSettings(database: SQLite.SQLiteDatabase): Promise<void> {
   );
   if ((row?.count ?? 0) > 0) return;
 
-  for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
+  for (const key of SETTING_KEYS) {
     await database.runAsync(
       'INSERT INTO settings (key, value) VALUES (?, ?)',
       key,
-      JSON.stringify(value),
+      JSON.stringify(DEFAULT_SETTINGS[key]),
     );
   }
 }
@@ -164,11 +177,23 @@ export async function loadAllSettings(): Promise<AppSettings> {
     'SELECT key, value FROM settings',
   );
 
-  const settings = { ...DEFAULT_SETTINGS };
+  const settings: AppSettings = { ...DEFAULT_SETTINGS };
   for (const row of rows) {
-    const key = row.key as keyof AppSettings;
-    if (key in settings) {
-      settings[key] = JSON.parse(row.value) as AppSettings[typeof key];
+    if (!isSettingKey(row.key)) continue;
+    const parsed: unknown = JSON.parse(row.value);
+    switch (row.key) {
+      case 'darkMode':
+        settings.darkMode = parsed as AppSettings['darkMode'];
+        break;
+      case 'showRomaji':
+        settings.showRomaji = parsed as AppSettings['showRomaji'];
+        break;
+      case 'fontSize':
+        settings.fontSize = parsed as AppSettings['fontSize'];
+        break;
+      case 'onboardingComplete':
+        settings.onboardingComplete = parsed as AppSettings['onboardingComplete'];
+        break;
     }
   }
   return settings;
