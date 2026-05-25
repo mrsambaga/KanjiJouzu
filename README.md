@@ -4,47 +4,72 @@ Personal offline-first kanji learning app for JLPT N5 and N4.
 
 ## Architecture
 
-**No backend.** This is a single-user app — all data lives on-device. A Go or REST backend would add deployment, auth, and sync complexity with no benefit for personal use.
+**No backend.** This is a single-user app — all data lives on-device.
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Framework | Expo + React Native | Fast dev, cross-platform, great mobile APIs |
-| Database | **expo-sqlite** | Structured queries, relational data, fully offline |
-| State | **Zustand** | Minimal boilerplate for UI + session state |
-| Navigation | **React Navigation** | Standard stack + tab patterns |
-| Animations | Reanimated + Gesture Handler | Smooth flip/swipe cards |
-
-### Why SQLite over AsyncStorage / Realm / WatermelonDB?
-
-- **AsyncStorage** — key-value only; poor fit for kanji lists, progress joins, and search
-- **Realm** — powerful but heavier setup; overkill for ~130 kanji + progress rows
-- **WatermelonDB** — sync/reactive architecture you don't need for one user
-- **SQLite** — simple SQL, easy to inspect, fast enough, ships with Expo
+| Layer | Choice |
+|-------|--------|
+| Framework | Expo + React Native |
+| Database | **expo-sqlite** (kanji, vocabulary, progress, decks, activity) |
+| State | **Zustand** (settings, study session) |
+| Navigation | **React Navigation** (stack + tabs) |
+| Animations | Reanimated + Gesture Handler (flip / swipe cards) |
 
 ### Project structure
 
 ```
 src/
-  components/     Reusable UI + flashcard
+  components/     UI + flashcard (study & preview modes)
   context/        Theme provider
-  data/           N5/N4 seed kanji
-  db/             SQLite init + schema
+  data/           N5/N4 kanji + vocabulary seed (generated .ts)
+  db/             SQLite init, schema, migrations
   navigation/     Stack + tabs
-  screens/        App screens
-  services/       Business logic (kanji, progress, decks, stats)
+  screens/        Home, Levels, Level detail, Study, Preview, Decks, Stats, Settings
+  services/       Kanji, vocabulary, progress, study, decks, stats
   stores/         Zustand (settings, study session)
   theme/          Zenith Kanji design tokens
   types/          TypeScript interfaces
+
+scripts/          Generators for seed data (see below)
 ```
 
 ## Features
 
-- Flash cards with tap-to-reveal and swipe (right = remembered, left = difficult)
-- JLPT N5 / N4 categories with progress
-- Custom kanji decks
-- Dashboard with streak, daily goal, quick actions
-- Statistics and 7-day activity chart
-- Settings: dark mode, romaji toggle, font size, reset progress
+### Study
+
+- **Flash cards** — tap to reveal; swipe or buttons for remembered / difficult
+- **Session order** — for each kanji: one kanji card, then up to **5 vocabulary** cards (common N-level compounds)
+- **JLPT N5 & N4** — full PDF-aligned lists (108 N5, 167 N4 kanji)
+- **Level detail** (Levels tab → N5 / N4):
+  - Progress ring and stats (mastered, studied, difficult, total)
+  - **Study all** — full deck for that level
+  - **Study difficult** — only cards marked difficult for that level
+  - **Kanji list** — browse in PDF order; expand rows to see vocabulary; tap kanji or word to **preview** (flashcard UI without grading)
+- **Custom decks** — create decks and add kanji from search
+- **Continue** and global **difficult** review from Home
+
+### Progress & stats
+
+- Per-kanji SRS-style status: new → studying → mastered (or difficult)
+- Resume position per study source (level, level-difficult, custom deck)
+- Daily goal, streak, 7-day activity chart on Stats
+
+### Settings
+
+- Dark mode, romaji toggle, font size, reset progress, onboarding
+
+## Data model
+
+| Table | Purpose |
+|-------|---------|
+| `kanji` | Character, readings, meaning, JLPT level |
+| `vocabulary` | Compound words linked to kanji (`kanji_id`, up to 5 per kanji in study) |
+| `progress` | Review status and counts per kanji |
+| `custom_decks` / `deck_kanji` | User-built collections |
+| `daily_activity`, `review_history`, `study_position` | Stats and session resume |
+
+On first launch, SQLite is seeded from `src/data/`. Later app starts **migrate** missing kanji and vocabulary for existing installs.
+
+N4 study uses the official **character list** (not only `jlpt_level`), so kanji shared with N5 still appear in N4 sessions.
 
 ## Getting started
 
@@ -61,4 +86,19 @@ UI follows the **Zenith Kanji** design system in `kanji-jouzu-deisgn/` — soft 
 
 ## Seed data
 
-~80 N5 and ~50 N4 kanji ship in `src/data/`. Expand by adding entries to `n5Kanji.ts` / `n4Kanji.ts`.
+| Source | Kanji | Vocabulary |
+|--------|-------|------------|
+| N5 (PDF list) | 108 in `n5Kanji.ts` | 5 per kanji in `n5Vocabulary.ts` |
+| N4 (EJable PDF) | 167 in `n4Kanji.ts` | 5 per kanji in `n4Vocabulary.ts` |
+
+**Regenerate** after editing generator scripts:
+
+```bash
+node scripts/build-n4-kanji.mjs      # → src/data/n4Kanji.ts
+node scripts/build-n4-vocabulary.mjs # → src/data/n4Vocabulary.ts
+node scripts/build-n5-vocabulary.mjs # → src/data/n5Vocabulary.ts
+```
+
+N5 kanji are maintained in `n5Kanji.ts` directly (no `build-n5-kanji.mjs` yet). Vocabulary for both levels is generated from the `ROWS` arrays in the scripts above.
+
+Restart the app after seed changes so migrations pick up new kanji and vocabulary.
