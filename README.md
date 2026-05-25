@@ -8,7 +8,7 @@ Personal offline-first kanji learning app for JLPT N5 and N4.
 
 | Layer | Choice |
 |-------|--------|
-| Framework | Expo + React Native |
+| Framework | Expo SDK 54 + React Native 0.81 |
 | Database | **expo-sqlite** (kanji, vocabulary, progress, decks, activity) |
 | State | **Zustand** (settings, study session) |
 | Navigation | **React Navigation** (stack + tabs) |
