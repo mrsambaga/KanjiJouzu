@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { N4_KANJI, N5_KANJI } from '../data/seedKanji';
+import { N4_VOCABULARY_BY_CHARACTER } from '../data/n4Vocabulary';
 import { N5_VOCABULARY_BY_CHARACTER } from '../data/n5Vocabulary';
 import { AppSettings } from '../types';
 
@@ -135,7 +136,7 @@ async function migrateMissingKanji(database: SQLite.SQLiteDatabase): Promise<voi
   );
   let nextId = (maxRow?.maxId ?? 0) + 1;
 
-  for (const kanji of N5_KANJI) {
+  for (const kanji of [...N5_KANJI, ...N4_KANJI]) {
     const existing = await database.getFirstAsync<{ id: number }>(
       'SELECT id FROM kanji WHERE character = ?',
       kanji.character,
@@ -159,8 +160,11 @@ async function migrateMissingKanji(database: SQLite.SQLiteDatabase): Promise<voi
   }
 }
 
-async function seedVocabulary(database: SQLite.SQLiteDatabase): Promise<void> {
-  for (const [character, entries] of Object.entries(N5_VOCABULARY_BY_CHARACTER)) {
+async function seedVocabularyMap(
+  database: SQLite.SQLiteDatabase,
+  vocabularyByCharacter: Record<string, { word: string; reading: string; meaning: string }[]>,
+): Promise<void> {
+  for (const [character, entries] of Object.entries(vocabularyByCharacter)) {
     const kanjiRow = await database.getFirstAsync<{ id: number }>(
       'SELECT id FROM kanji WHERE character = ?',
       character,
@@ -187,6 +191,11 @@ async function seedVocabulary(database: SQLite.SQLiteDatabase): Promise<void> {
       sortOrder += 1;
     }
   }
+}
+
+async function seedVocabulary(database: SQLite.SQLiteDatabase): Promise<void> {
+  await seedVocabularyMap(database, N5_VOCABULARY_BY_CHARACTER);
+  await seedVocabularyMap(database, N4_VOCABULARY_BY_CHARACTER);
 }
 
 async function seedSettings(database: SQLite.SQLiteDatabase): Promise<void> {

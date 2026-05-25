@@ -1,3 +1,4 @@
+import { N4_KANJI_CHARACTERS } from '../data/n4Kanji';
 import { getDatabase, todayDateString } from '../db/database';
 import {
   DeckStats,
@@ -132,6 +133,17 @@ export async function getDeckStats(
   `;
 
   if (filter.type === 'jlpt') {
+    if (filter.level === 'N4') {
+      const placeholders = N4_KANJI_CHARACTERS.map(() => '?').join(', ');
+      const row = await db.getFirstAsync<{
+        total: number;
+        studied: number;
+        mastered: number;
+        difficult: number;
+      }>(`${statsQuery} WHERE k.character IN (${placeholders})`, ...N4_KANJI_CHARACTERS);
+      return mapDeckStatsRow(row ?? { total: 0, studied: 0, mastered: 0, difficult: 0 });
+    }
+
     const row = await db.getFirstAsync<{
       total: number;
       studied: number;

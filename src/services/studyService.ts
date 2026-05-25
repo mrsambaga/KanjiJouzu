@@ -3,8 +3,11 @@ import { getDifficultKanji, getRecentlyStudied } from './progressService';
 import { getKanjiWithProgress } from './kanjiService';
 import { getStudyPosition } from './studyPositionService';
 import { getVocabularyByKanjiIds } from './vocabularyService';
+import { N4_KANJI_CHARACTERS, N4_KANJI_CHARACTER_SET } from '../data/n4Kanji';
 import { getDatabase, todayDateString } from '../db/database';
 import { KanjiWithProgress, JlptLevel, StudyCard, StudySource } from '../types';
+
+const N4_ORDER = new Map(N4_KANJI_CHARACTERS.map((character, index) => [character, index]));
 
 const STATUS_ORDER: Record<string, number> = {
   difficult: 0,
@@ -44,7 +47,17 @@ export async function buildStudyQueue(source: StudySource): Promise<KanjiWithPro
   switch (source.type) {
     case 'jlpt': {
       const all = await getKanjiWithProgress();
-      return prioritizeQueue(all.filter((k) => k.jlptLevel === source.level));
+      const filtered =
+        source.level === 'N4'
+          ? all.filter((k) => N4_KANJI_CHARACTER_SET.has(k.character))
+          : all.filter((k) => k.jlptLevel === source.level);
+      const ordered =
+        source.level === 'N4'
+          ? [...filtered].sort(
+              (a, b) => (N4_ORDER.get(a.character) ?? 0) - (N4_ORDER.get(b.character) ?? 0),
+            )
+          : filtered;
+      return prioritizeQueue(ordered);
     }
     case 'custom': {
       const deck = await getCustomDeck(source.deckId);
