@@ -10,8 +10,6 @@ import { Tag } from '../components/ui/Tag';
 import { useTheme } from '../context/ThemeContext';
 import { getDeckStats } from '../services/progressService';
 import { getCustomDecks } from '../services/deckService';
-import { prepareStudySession } from '../services/studyService';
-import { useStudyStore } from '../stores/studyStore';
 import { DeckStats, CustomDeck, JlptLevel } from '../types';
 import { RootStackParamList } from '../navigation/types';
 import { spacing, radius } from '../theme';
@@ -21,14 +19,14 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 interface LevelCardProps {
   level: JlptLevel;
   stats: DeckStats;
-  onStudy: () => void;
+  onPress: () => void;
 }
 
-function LevelCard({ level, stats, onStudy }: LevelCardProps) {
+function LevelCard({ level, stats, onPress }: LevelCardProps) {
   const { colors } = useTheme();
 
   return (
-    <Card onPress={onStudy} style={styles.levelCard}>
+    <Card onPress={onPress} style={styles.levelCard}>
       <View style={styles.levelHeader}>
         <Tag label={level} variant="primary" />
         <ProgressRing progress={stats.progressPercent / 100} size={56} strokeWidth={5} />
@@ -44,7 +42,6 @@ function LevelCard({ level, stats, onStudy }: LevelCardProps) {
 export function CategoriesScreen() {
   const { colors, typography } = useTheme();
   const navigation = useNavigation<Nav>();
-  const startSession = useStudyStore((s) => s.startSession);
 
   const [n5Stats, setN5Stats] = useState<DeckStats | null>(null);
   const [n4Stats, setN4Stats] = useState<DeckStats | null>(null);
@@ -74,12 +71,8 @@ export function CategoriesScreen() {
     setRefreshing(false);
   };
 
-  const startLevel = async (level: JlptLevel) => {
-    const source = { type: 'jlpt' as const, level };
-    const session = await prepareStudySession(source);
-    if (!session) return;
-    startSession(source, session.queue, session.startIndex);
-    navigation.navigate('Study');
+  const openLevel = (level: JlptLevel) => {
+    navigation.navigate('LevelDetail', { level });
   };
 
   return (
@@ -93,8 +86,8 @@ export function CategoriesScreen() {
           Choose a JLPT level or custom deck to study
         </Text>
 
-        {n5Stats && <LevelCard level="N5" stats={n5Stats} onStudy={() => startLevel('N5')} />}
-        {n4Stats && <LevelCard level="N4" stats={n4Stats} onStudy={() => startLevel('N4')} />}
+        {n5Stats && <LevelCard level="N5" stats={n5Stats} onPress={() => openLevel('N5')} />}
+        {n4Stats && <LevelCard level="N4" stats={n4Stats} onPress={() => openLevel('N4')} />}
 
         <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>Custom Decks</Text>
         {decks.length === 0 ? (
@@ -108,13 +101,7 @@ export function CategoriesScreen() {
             <DeckRow
               key={deck.id}
               deck={deck}
-              onPress={async () => {
-                const source = { type: 'custom' as const, deckId: deck.id };
-                const session = await prepareStudySession(source);
-                if (!session) return;
-                startSession(source, session.queue, session.startIndex);
-                navigation.navigate('Study');
-              }}
+              onPress={() => navigation.navigate('DeckDetail', { deckId: deck.id })}
             />
           ))
         )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Pressable, Text, View, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Button } from '../ui/Button';
 import { useTheme } from '../../context/ThemeContext';
@@ -11,156 +11,163 @@ interface FlashCardProps {
   card: StudyCard;
   isFlipped: boolean;
   onFlip: () => void;
+  mode?: 'study' | 'preview';
 }
 
-export function FlashCard({ card, isFlipped, onFlip }: FlashCardProps) {
+export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCardProps) {
   const { colors, typography, fontScale, scaledFontSize } = useTheme();
   const showRomaji = useSettingsStore((s) => s.showRomaji);
   const kanjiSize = scaledFontSize(typography.displayKanji.fontSize, fontScale);
+  const isPreview = mode === 'preview';
 
-  if (card.type === 'vocabulary') {
-    const { vocabulary } = card;
-    return (
-      <View style={styles.wrapper}>
-        <View
-          style={[
-            styles.card,
-            {
-              borderColor: colors.outlineVariant,
-              backgroundColor: colors.surfaceContainerLowest,
-            },
-          ]}
-        >
-          {!isFlipped ? (
-            <Animated.View
-              key="vocab-front"
-              entering={FadeIn.duration(200)}
-              exiting={FadeOut.duration(150)}
-              style={styles.face}
-            >
-              <Text style={[styles.vocabLabel, { color: colors.onSurfaceVariant }]}>
-                Vocabulary · {card.kanji.character}
-              </Text>
-              <Text
-                style={[
-                  styles.vocabWord,
-                  {
-                    fontFamily: typography.displayKanji.fontFamily,
-                    color: colors.onSurface,
-                  },
-                ]}
-              >
-                {vocabulary.word}
-              </Text>
-            </Animated.View>
-          ) : (
-            <Animated.View
-              key="vocab-back"
-              entering={FadeIn.duration(200)}
-              exiting={FadeOut.duration(150)}
-              style={styles.face}
-            >
-              <Text style={[styles.meaning, { color: colors.onSurface }]}>{vocabulary.meaning}</Text>
-              <Text style={[styles.reading, { color: colors.primary }]}>{vocabulary.reading}</Text>
-              {showRomaji && (
-                <Text style={[styles.romaji, { color: colors.onSurfaceVariant }]}>
-                  {card.kanji.character} — {card.kanji.meaning}
-                </Text>
-              )}
-            </Animated.View>
-          )}
-
-          <View style={styles.footer}>
-            <Button
-              title={isFlipped ? 'Show Word' : 'Reveal Answer'}
-              variant={isFlipped ? 'outline' : 'primary'}
-              onPress={onFlip}
-              fullWidth
-            />
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  const kanji: KanjiWithProgress = card.kanji;
-
-  return (
-    <View style={styles.wrapper}>
-      <View
-        style={[
-          styles.card,
-          {
-            borderColor: colors.outlineVariant,
-            backgroundColor: colors.surfaceContainerLowest,
-          },
-        ]}
-      >
-        {!isFlipped ? (
-          <Animated.View
-            key="front"
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(150)}
-            style={styles.face}
-          >
-            <Text
-              style={[
-                styles.kanji,
-                {
-                  fontFamily: typography.displayKanji.fontFamily,
-                  fontSize: kanjiSize,
-                  lineHeight: kanjiSize * 1.2,
-                  color: colors.onSurface,
-                  letterSpacing: typography.displayKanji.letterSpacing,
-                },
-              ]}
-            >
-              {kanji.character}
-            </Text>
-          </Animated.View>
-        ) : (
-          <Animated.View
-            key="back"
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(150)}
-            style={styles.face}
-          >
-            <Text style={[styles.meaning, { color: colors.onSurface }]}>{kanji.meaning}</Text>
-            {showRomaji && (
-              <Text style={[styles.romaji, { color: colors.primary }]}>{kanji.romaji}</Text>
-            )}
-            {kanji.onyomi ? (
-              <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>
-                On: {kanji.onyomi}
-              </Text>
-            ) : null}
-            {kanji.kunyomi ? (
-              <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>
-                Kun: {kanji.kunyomi}
-              </Text>
-            ) : null}
-            {kanji.example ? (
-              <View style={[styles.exampleBox, { backgroundColor: colors.surfaceContainer }]}>
-                <Text style={[styles.example, { color: colors.onSurface }]}>{kanji.example}</Text>
-                {kanji.exampleMeaning ? (
-                  <Text style={[styles.exampleMeaning, { color: colors.onSurfaceVariant }]}>
-                    {kanji.exampleMeaning}
-                  </Text>
-                ) : null}
-              </View>
-            ) : null}
-          </Animated.View>
-        )}
-
+  const cardShell = (face: React.ReactNode) => (
+    <View
+      style={[
+        styles.card,
+        {
+          borderColor: colors.outlineVariant,
+          backgroundColor: colors.surfaceContainerLowest,
+        },
+      ]}
+    >
+      {face}
+      {isPreview ? (
+        <Text style={[styles.previewHint, { color: colors.onSurfaceVariant }]}>
+          {isFlipped ? 'Tap to show front' : 'Tap to reveal answer'}
+        </Text>
+      ) : null}
+      {!isPreview ? (
         <View style={styles.footer}>
           <Button
-            title={isFlipped ? 'Show Kanji' : 'Reveal Answer'}
+            title={
+              card.type === 'vocabulary'
+                ? isFlipped
+                  ? 'Show Word'
+                  : 'Reveal Answer'
+                : isFlipped
+                  ? 'Show Kanji'
+                  : 'Reveal Answer'
+            }
             variant={isFlipped ? 'outline' : 'primary'}
             onPress={onFlip}
             fullWidth
           />
         </View>
+      ) : null}
+    </View>
+  );
+
+  const wrapPreview = (content: React.ReactNode) => {
+    if (!isPreview) return content;
+    return (
+      <Pressable onPress={onFlip} style={styles.previewPressable}>
+        {content}
+      </Pressable>
+    );
+  };
+
+  if (card.type === 'vocabulary') {
+    const { vocabulary } = card;
+    const face = !isFlipped ? (
+      <Animated.View
+        key="vocab-front"
+        entering={FadeIn.duration(200)}
+        exiting={FadeOut.duration(150)}
+        style={styles.face}
+      >
+        <Text style={[styles.vocabLabel, { color: colors.onSurfaceVariant }]}>
+          Vocabulary · {card.kanji.character}
+        </Text>
+        <Text
+          style={[
+            styles.vocabWord,
+            {
+              fontFamily: typography.displayKanji.fontFamily,
+              color: colors.onSurface,
+            },
+          ]}
+        >
+          {vocabulary.word}
+        </Text>
+      </Animated.View>
+    ) : (
+      <Animated.View
+        key="vocab-back"
+        entering={FadeIn.duration(200)}
+        exiting={FadeOut.duration(150)}
+        style={styles.face}
+      >
+        <Text style={[styles.meaning, { color: colors.onSurface }]}>{vocabulary.meaning}</Text>
+        <Text style={[styles.reading, { color: colors.primary }]}>{vocabulary.reading}</Text>
+        {showRomaji && (
+          <Text style={[styles.romaji, { color: colors.onSurfaceVariant }]}>
+            {card.kanji.character} — {card.kanji.meaning}
+          </Text>
+        )}
+      </Animated.View>
+    );
+
+    return (
+      <View style={styles.wrapper}>
+        {wrapPreview(cardShell(face))}
       </View>
+    );
+  }
+
+  const kanji: KanjiWithProgress = card.kanji;
+  const face = !isFlipped ? (
+    <Animated.View
+      key="front"
+      entering={FadeIn.duration(200)}
+      exiting={FadeOut.duration(150)}
+      style={styles.face}
+    >
+      <Text
+        style={[
+          styles.kanji,
+          {
+            fontFamily: typography.displayKanji.fontFamily,
+            fontSize: kanjiSize,
+            lineHeight: kanjiSize * 1.2,
+            color: colors.onSurface,
+            letterSpacing: typography.displayKanji.letterSpacing,
+          },
+        ]}
+      >
+        {kanji.character}
+      </Text>
+    </Animated.View>
+  ) : (
+    <Animated.View
+      key="back"
+      entering={FadeIn.duration(200)}
+      exiting={FadeOut.duration(150)}
+      style={styles.face}
+    >
+      <Text style={[styles.meaning, { color: colors.onSurface }]}>{kanji.meaning}</Text>
+      {showRomaji && <Text style={[styles.romaji, { color: colors.primary }]}>{kanji.romaji}</Text>}
+      {kanji.onyomi ? (
+        <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>On: {kanji.onyomi}</Text>
+      ) : null}
+      {kanji.kunyomi ? (
+        <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>Kun: {kanji.kunyomi}</Text>
+      ) : null}
+      {kanji.example ? (
+        <View style={[styles.exampleBox, { backgroundColor: colors.surfaceContainer }]}>
+          <Text style={[styles.example, { color: colors.onSurface }]}>{kanji.example}</Text>
+          {kanji.exampleMeaning ? (
+            <Text style={[styles.exampleMeaning, { color: colors.onSurfaceVariant }]}>
+              {kanji.exampleMeaning}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+    </Animated.View>
+  );
+
+  return (
+    <View style={styles.wrapper}>
+      {wrapPreview(cardShell(face))}
     </View>
   );
 }
@@ -170,6 +177,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 340,
     alignSelf: 'center',
+  },
+  previewPressable: {
+    width: '100%',
   },
   card: {
     width: '100%',
@@ -188,6 +198,12 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,
+  },
+  previewHint: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    textAlign: 'center',
+    paddingBottom: spacing.md,
   },
   kanji: {
     textAlign: 'center',

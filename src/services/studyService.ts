@@ -4,10 +4,24 @@ import { getKanjiWithProgress } from './kanjiService';
 import { getStudyPosition } from './studyPositionService';
 import { getVocabularyByKanjiIds } from './vocabularyService';
 import { N4_KANJI_CHARACTERS, N4_KANJI_CHARACTER_SET } from '../data/n4Kanji';
+import { N5_KANJI_CHARACTERS, N5_KANJI_CHARACTER_SET } from '../data/n5Kanji';
 import { getDatabase, todayDateString } from '../db/database';
 import { KanjiWithProgress, JlptLevel, StudyCard, StudySource } from '../types';
 
 const N4_ORDER = new Map(N4_KANJI_CHARACTERS.map((character, index) => [character, index]));
+const N5_ORDER = new Map(N5_KANJI_CHARACTERS.map((character, index) => [character, index]));
+
+function filterKanjiByLevel(all: KanjiWithProgress[], level: JlptLevel): KanjiWithProgress[] {
+  if (level === 'N4') {
+    return all.filter((k) => N4_KANJI_CHARACTER_SET.has(k.character));
+  }
+  return all.filter((k) => N5_KANJI_CHARACTER_SET.has(k.character));
+}
+
+function orderKanjiByLevel(kanji: KanjiWithProgress[], level: JlptLevel): KanjiWithProgress[] {
+  const order = level === 'N4' ? N4_ORDER : N5_ORDER;
+  return [...kanji].sort((a, b) => (order.get(a.character) ?? 0) - (order.get(b.character) ?? 0));
+}
 
 const STATUS_ORDER: Record<string, number> = {
   difficult: 0,
@@ -43,21 +57,24 @@ export async function expandQueueWithVocabulary(
   return cards;
 }
 
+export async function getKanjiForLevel(level: JlptLevel): Promise<KanjiWithProgress[]> {
+  const all = await getKanjiWithProgress();
+  return orderKanjiByLevel(filterKanjiByLevel(all, level), level);
+}
+
 export async function buildStudyQueue(source: StudySource): Promise<KanjiWithProgress[]> {
   switch (source.type) {
     case 'jlpt': {
-      const all = await getKanjiWithProgress();
-      const filtered =
-        source.level === 'N4'
-          ? all.filter((k) => N4_KANJI_CHARACTER_SET.has(k.character))
-          : all.filter((k) => k.jlptLevel === source.level);
-      const ordered =
-        source.level === 'N4'
-          ? [...filtered].sort(
-              (a, b) => (N4_ORDER.get(a.character) ?? 0) - (N4_ORDER.get(b.character) ?? 0),
-            )
-          : filtered;
+      const ordered = await getKanjiForLevel(source.level);
       return prioritizeQueue(ordered);
+    }
+    case 'jlpt-difficult': {
+      const difficult = await getDifficultKanji();
+      const filtered = orderKanjiByLevel(
+        filterKanjiByLevel(difficult, source.level),
+        source.level,
+      );
+      return prioritizeQueue(filtered);
     }
     case 'custom': {
       const deck = await getCustomDeck(source.deckId);

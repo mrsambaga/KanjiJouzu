@@ -63,9 +63,14 @@ export interface DeckStats {
 
 export type StudySource =
   | { type: 'jlpt'; level: JlptLevel }
+  | { type: 'jlpt-difficult'; level: JlptLevel }
   | { type: 'custom'; deckId: number }
   | { type: 'difficult' }
   | { type: 'continue' };
+
+export type CardPreviewParams =
+  | { type: 'kanji'; kanjiId: number }
+  | { type: 'vocabulary'; kanjiId: number; vocabularyId: number };
 
 export interface KanjiWithProgress extends Kanji {
   progress?: KanjiProgress;

@@ -1,4 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { CardPreviewParams, JlptLevel } from '../types';
 
 export type TabParamList = {
   Home: undefined;
@@ -12,6 +13,8 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Main: NavigatorScreenParams<TabParamList>;
   Study: undefined;
+  LevelDetail: { level: JlptLevel };
+  CardPreview: CardPreviewParams;
   DeckDetail: { deckId: number };
 };
 

@@ -4,6 +4,8 @@ import { RootStackParamList } from './types';
 import { TabNavigator } from './TabNavigator';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { StudyScreen } from '../screens/StudyScreen';
+import { LevelDetailScreen } from '../screens/LevelDetailScreen';
+import { CardPreviewScreen } from '../screens/CardPreviewScreen';
 import { DeckDetailScreen } from '../screens/DeckDetailScreen';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useTheme } from '../context/ThemeContext';
@@ -41,6 +43,16 @@ export function RootNavigator() {
           title: 'Study Session',
           headerBackTitle: 'Close',
         }}
+      />
+      <Stack.Screen
+        name="LevelDetail"
+        component={LevelDetailScreen}
+        options={({ route }) => ({ title: `JLPT ${route.params.level}` })}
+      />
+      <Stack.Screen
+        name="CardPreview"
+        component={CardPreviewScreen}
+        options={{ title: 'Preview', presentation: 'modal' }}
       />
       <Stack.Screen
         name="DeckDetail"

@@ -5,6 +5,8 @@ export function studySourceKey(source: StudySource): string {
   switch (source.type) {
     case 'jlpt':
       return `jlpt:${source.level}`;
+    case 'jlpt-difficult':
+      return `jlpt-difficult:${source.level}`;
     case 'custom':
       return `custom:${source.deckId}`;
     case 'difficult':

@@ -110,3 +110,6 @@ export const N5_KANJI: Omit<Kanji, 'id'>[] = [
   { character: '思', romaji: 'omo', meaning: 'think', jlptLevel: 'N5', onyomi: 'シ', kunyomi: 'おも' },
   { character: '知', romaji: 'shi', meaning: 'know', jlptLevel: 'N5', onyomi: 'チ', kunyomi: 'し' },
 ];
+
+export const N5_KANJI_CHARACTERS = N5_KANJI.map((k) => k.character);
+export const N5_KANJI_CHARACTER_SET = new Set(N5_KANJI_CHARACTERS);
