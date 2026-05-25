@@ -70,3 +70,18 @@ export type StudySource =
 export interface KanjiWithProgress extends Kanji {
   progress?: KanjiProgress;
 }
+
+export interface Vocabulary {
+  id: number;
+  kanjiId: number;
+  word: string;
+  reading: string;
+  meaning: string;
+  sortOrder: number;
+}
+
+export type VocabularySeed = Pick<Vocabulary, 'word' | 'reading' | 'meaning'>;
+
+export type StudyCard =
+  | { type: 'kanji'; kanji: KanjiWithProgress }
+  | { type: 'vocabulary'; kanji: KanjiWithProgress; vocabulary: Vocabulary };

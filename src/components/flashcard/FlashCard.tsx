@@ -3,20 +3,87 @@ import { Text, View, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Button } from '../ui/Button';
 import { useTheme } from '../../context/ThemeContext';
-import { KanjiWithProgress } from '../../types';
+import { KanjiWithProgress, StudyCard } from '../../types';
 import { radius, spacing } from '../../theme';
 import { useSettingsStore } from '../../stores/settingsStore';
 
 interface FlashCardProps {
-  kanji: KanjiWithProgress;
+  card: StudyCard;
   isFlipped: boolean;
   onFlip: () => void;
 }
 
-export function FlashCard({ kanji, isFlipped, onFlip }: FlashCardProps) {
+export function FlashCard({ card, isFlipped, onFlip }: FlashCardProps) {
   const { colors, typography, fontScale, scaledFontSize } = useTheme();
   const showRomaji = useSettingsStore((s) => s.showRomaji);
   const kanjiSize = scaledFontSize(typography.displayKanji.fontSize, fontScale);
+
+  if (card.type === 'vocabulary') {
+    const { vocabulary } = card;
+    return (
+      <View style={styles.wrapper}>
+        <View
+          style={[
+            styles.card,
+            {
+              borderColor: colors.outlineVariant,
+              backgroundColor: colors.surfaceContainerLowest,
+            },
+          ]}
+        >
+          {!isFlipped ? (
+            <Animated.View
+              key="vocab-front"
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(150)}
+              style={styles.face}
+            >
+              <Text style={[styles.vocabLabel, { color: colors.onSurfaceVariant }]}>
+                Vocabulary · {card.kanji.character}
+              </Text>
+              <Text
+                style={[
+                  styles.vocabWord,
+                  {
+                    fontFamily: typography.displayKanji.fontFamily,
+                    color: colors.onSurface,
+                  },
+                ]}
+              >
+                {vocabulary.word}
+              </Text>
+            </Animated.View>
+          ) : (
+            <Animated.View
+              key="vocab-back"
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(150)}
+              style={styles.face}
+            >
+              <Text style={[styles.meaning, { color: colors.onSurface }]}>{vocabulary.meaning}</Text>
+              <Text style={[styles.reading, { color: colors.primary }]}>{vocabulary.reading}</Text>
+              {showRomaji && (
+                <Text style={[styles.romaji, { color: colors.onSurfaceVariant }]}>
+                  {card.kanji.character} — {card.kanji.meaning}
+                </Text>
+              )}
+            </Animated.View>
+          )}
+
+          <View style={styles.footer}>
+            <Button
+              title={isFlipped ? 'Show Word' : 'Reveal Answer'}
+              variant={isFlipped ? 'outline' : 'primary'}
+              onPress={onFlip}
+              fullWidth
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  const kanji: KanjiWithProgress = card.kanji;
 
   return (
     <View style={styles.wrapper}>
@@ -123,6 +190,15 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   kanji: {
+    textAlign: 'center',
+  },
+  vocabLabel: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    marginBottom: spacing.sm,
+  },
+  vocabWord: {
+    fontSize: 42,
     textAlign: 'center',
   },
   meaning: {

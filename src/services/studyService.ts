@@ -2,8 +2,9 @@ import { getCustomDeck } from './deckService';
 import { getDifficultKanji, getRecentlyStudied } from './progressService';
 import { getKanjiWithProgress } from './kanjiService';
 import { getStudyPosition } from './studyPositionService';
+import { getVocabularyByKanjiIds } from './vocabularyService';
 import { getDatabase, todayDateString } from '../db/database';
-import { KanjiWithProgress, JlptLevel, StudySource } from '../types';
+import { KanjiWithProgress, JlptLevel, StudyCard, StudySource } from '../types';
 
 const STATUS_ORDER: Record<string, number> = {
   difficult: 0,
@@ -18,6 +19,25 @@ function prioritizeQueue(kanji: KanjiWithProgress[]): KanjiWithProgress[] {
     const sb = b.progress?.status ?? 'new';
     return (STATUS_ORDER[sa] ?? 1) - (STATUS_ORDER[sb] ?? 1);
   });
+}
+
+const VOCAB_PER_KANJI = 5;
+
+export async function expandQueueWithVocabulary(
+  kanjiList: KanjiWithProgress[],
+): Promise<StudyCard[]> {
+  const vocabByKanji = await getVocabularyByKanjiIds(kanjiList.map((k) => k.id));
+  const cards: StudyCard[] = [];
+
+  for (const kanji of kanjiList) {
+    cards.push({ type: 'kanji', kanji });
+    const vocab = (vocabByKanji.get(kanji.id) ?? []).slice(0, VOCAB_PER_KANJI);
+    for (const entry of vocab) {
+      cards.push({ type: 'vocabulary', kanji, vocabulary: entry });
+    }
+  }
+
+  return cards;
 }
 
 export async function buildStudyQueue(source: StudySource): Promise<KanjiWithProgress[]> {
@@ -42,10 +62,11 @@ export async function buildStudyQueue(source: StudySource): Promise<KanjiWithPro
 
 export async function prepareStudySession(
   source: StudySource,
-): Promise<{ queue: KanjiWithProgress[]; startIndex: number } | null> {
-  const queue = await buildStudyQueue(source);
-  if (queue.length === 0) return null;
+): Promise<{ queue: StudyCard[]; startIndex: number } | null> {
+  const kanjiQueue = await buildStudyQueue(source);
+  if (kanjiQueue.length === 0) return null;
 
+  const queue = await expandQueueWithVocabulary(kanjiQueue);
   const savedIndex = await getStudyPosition(source);
   const startIndex = Math.min(Math.max(0, savedIndex), queue.length - 1);
   return { queue, startIndex };

@@ -8,7 +8,7 @@ import { ProgressBar } from '../components/ui/ProgressBar';
 import { Button } from '../components/ui/Button';
 import { useTheme } from '../context/ThemeContext';
 import { useStudyStore } from '../stores/studyStore';
-import { recordReview } from '../services/progressService';
+import { recordReview, recordVocabularyReview } from '../services/progressService';
 import { RootStackParamList } from '../navigation/types';
 import { spacing } from '../theme';
 
@@ -47,7 +47,11 @@ export function StudyScreen() {
   const handleResult = useCallback(
     async (remembered: boolean) => {
       if (!current) return;
-      await recordReview(current.id, remembered ? 'remembered' : 'difficult');
+      if (current.type === 'kanji') {
+        await recordReview(current.kanji.id, remembered ? 'remembered' : 'difficult');
+      } else {
+        await recordVocabularyReview();
+      }
       recordSessionResult(remembered);
       nextCard();
     },
@@ -102,8 +106,12 @@ export function StudyScreen() {
       <View style={styles.cardArea}>
         {current && (
           <SwipeableFlashCard
-            key={current.id}
-            kanji={current}
+            key={
+              current.type === 'kanji'
+                ? `k-${current.kanji.id}`
+                : `v-${current.vocabulary.id}`
+            }
+            card={current}
             isFlipped={showAnswer}
             onFlip={flipCard}
             onSwipeNext={navigateNext}

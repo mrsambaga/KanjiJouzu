@@ -75,6 +75,10 @@ async function bumpDailyActivity(cardsStudied: number): Promise<void> {
   );
 }
 
+export async function recordVocabularyReview(): Promise<void> {
+  await bumpDailyActivity(1);
+}
+
 export async function recordReview(
   kanjiId: number,
   result: ReviewResult,

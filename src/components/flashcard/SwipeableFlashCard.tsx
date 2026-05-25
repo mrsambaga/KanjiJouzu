@@ -11,14 +11,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { FlashCard } from './FlashCard';
-import { KanjiWithProgress } from '../../types';
+import { StudyCard } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { spacing } from '../../theme';
 
 const SWIPE_THRESHOLD = 120;
 
 interface SwipeableFlashCardProps {
-  kanji: KanjiWithProgress;
+  card: StudyCard;
   isFlipped: boolean;
   onFlip: () => void;
   onSwipeNext: () => void;
@@ -28,7 +28,7 @@ interface SwipeableFlashCardProps {
 }
 
 export function SwipeableFlashCard({
-  kanji,
+  card,
   isFlipped,
   onFlip,
   onSwipeNext,
@@ -108,7 +108,7 @@ export function SwipeableFlashCard({
 
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.cardWrapper, cardStyle]}>
-          <FlashCard kanji={kanji} isFlipped={isFlipped} onFlip={onFlip} />
+          <FlashCard card={card} isFlipped={isFlipped} onFlip={onFlip} />
         </Animated.View>
       </GestureDetector>
     </View>

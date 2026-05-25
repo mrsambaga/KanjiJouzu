@@ -1,17 +1,17 @@
 import { create } from 'zustand';
-import { KanjiWithProgress, StudySource } from '../types';
+import { StudyCard, StudySource } from '../types';
 import { resetStudyPosition, saveStudyPosition } from '../services/studyPositionService';
 
 interface StudyState {
   isActive: boolean;
   source: StudySource | null;
-  queue: KanjiWithProgress[];
+  queue: StudyCard[];
   currentIndex: number;
   showAnswer: boolean;
   sessionCorrect: number;
   sessionTotal: number;
   startedAt: string | null;
-  startSession: (source: StudySource, kanji: KanjiWithProgress[], startIndex?: number) => void;
+  startSession: (source: StudySource, queue: StudyCard[], startIndex?: number) => void;
   flipCard: () => void;
   recordSessionResult: (correct: boolean) => void;
   nextCard: () => void;
@@ -35,12 +35,12 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   sessionTotal: 0,
   startedAt: null,
 
-  startSession: (source, kanji, startIndex = 0) => {
-    const index = Math.min(Math.max(0, startIndex), Math.max(0, kanji.length - 1));
+  startSession: (source, queue, startIndex = 0) => {
+    const index = Math.min(Math.max(0, startIndex), Math.max(0, queue.length - 1));
     set({
       isActive: true,
       source,
-      queue: kanji,
+      queue,
       currentIndex: index,
       showAnswer: false,
       sessionCorrect: 0,

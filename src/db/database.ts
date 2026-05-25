@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { N4_KANJI, N5_KANJI } from '../data/seedKanji';
+import { N5_VOCABULARY_BY_CHARACTER } from '../data/n5Vocabulary';
 import { AppSettings } from '../types';
 
 const DB_NAME = 'kanji-jouzu.db';
@@ -66,6 +67,16 @@ const SCHEMA = `
     current_index INTEGER NOT NULL DEFAULT 0,
     updated_at TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS vocabulary (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kanji_id INTEGER NOT NULL REFERENCES kanji(id) ON DELETE CASCADE,
+    word TEXT NOT NULL,
+    reading TEXT NOT NULL,
+    meaning TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (kanji_id, word)
+  );
 `;
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -118,6 +129,66 @@ async function seedKanji(database: SQLite.SQLiteDatabase): Promise<void> {
   }
 }
 
+async function migrateMissingKanji(database: SQLite.SQLiteDatabase): Promise<void> {
+  const maxRow = await database.getFirstAsync<{ maxId: number | null }>(
+    'SELECT MAX(id) AS maxId FROM kanji',
+  );
+  let nextId = (maxRow?.maxId ?? 0) + 1;
+
+  for (const kanji of N5_KANJI) {
+    const existing = await database.getFirstAsync<{ id: number }>(
+      'SELECT id FROM kanji WHERE character = ?',
+      kanji.character,
+    );
+    if (existing) continue;
+
+    await database.runAsync(
+      `INSERT INTO kanji (id, character, romaji, meaning, jlpt_level, onyomi, kunyomi, example, example_meaning)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      nextId,
+      kanji.character,
+      kanji.romaji,
+      kanji.meaning,
+      kanji.jlptLevel,
+      kanji.onyomi ?? null,
+      kanji.kunyomi ?? null,
+      kanji.example ?? null,
+      kanji.exampleMeaning ?? null,
+    );
+    nextId += 1;
+  }
+}
+
+async function seedVocabulary(database: SQLite.SQLiteDatabase): Promise<void> {
+  for (const [character, entries] of Object.entries(N5_VOCABULARY_BY_CHARACTER)) {
+    const kanjiRow = await database.getFirstAsync<{ id: number }>(
+      'SELECT id FROM kanji WHERE character = ?',
+      character,
+    );
+    if (!kanjiRow) continue;
+
+    const existing = await database.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) AS count FROM vocabulary WHERE kanji_id = ?',
+      kanjiRow.id,
+    );
+    if ((existing?.count ?? 0) > 0) continue;
+
+    let sortOrder = 0;
+    for (const entry of entries) {
+      await database.runAsync(
+        `INSERT INTO vocabulary (kanji_id, word, reading, meaning, sort_order)
+         VALUES (?, ?, ?, ?, ?)`,
+        kanjiRow.id,
+        entry.word,
+        entry.reading,
+        entry.meaning,
+        sortOrder,
+      );
+      sortOrder += 1;
+    }
+  }
+}
+
 async function seedSettings(database: SQLite.SQLiteDatabase): Promise<void> {
   const row = await database.getFirstAsync<{ count: number }>(
     'SELECT COUNT(*) AS count FROM settings',
@@ -140,6 +211,8 @@ export async function initDatabase(): Promise<void> {
     db = await SQLite.openDatabaseAsync(DB_NAME);
     await db.execAsync(SCHEMA);
     await seedKanji(db);
+    await migrateMissingKanji(db);
+    await seedVocabulary(db);
     await seedSettings(db);
   })();
 
