@@ -5,7 +5,7 @@ import { getStudyPosition } from './studyPositionService';
 import { getVocabularyByKanjiIds } from './vocabularyService';
 import { N4_KANJI_CHARACTERS, N4_KANJI_CHARACTER_SET } from '../data/n4Kanji';
 import { N5_KANJI_CHARACTERS, N5_KANJI_CHARACTER_SET } from '../data/n5Kanji';
-import { getDatabase, todayDateString } from '../db/database';
+import { ensureVocabularySeeded, getDatabase, todayDateString } from '../db/database';
 import { KanjiWithProgress, JlptLevel, StudyCard, StudySource } from '../types';
 
 const N4_ORDER = new Map(N4_KANJI_CHARACTERS.map((character, index) => [character, index]));
@@ -96,6 +96,7 @@ export async function prepareStudySession(
   const kanjiQueue = await buildStudyQueue(source);
   if (kanjiQueue.length === 0) return null;
 
+  await ensureVocabularySeeded();
   const queue = await expandQueueWithVocabulary(kanjiQueue);
   const savedIndex = await getStudyPosition(source);
   const startIndex = Math.min(Math.max(0, savedIndex), queue.length - 1);

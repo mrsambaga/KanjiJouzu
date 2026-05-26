@@ -8,6 +8,7 @@ const DB_NAME = 'kanji-jouzu.db';
 
 let db: SQLite.SQLiteDatabase | null = null;
 let initPromise: Promise<void> | null = null;
+let vocabularySeedPromise: Promise<void> | null = null;
 
 const SCHEMA = `
   PRAGMA foreign_keys = ON;
@@ -163,39 +164,57 @@ async function migrateMissingKanji(database: SQLite.SQLiteDatabase): Promise<voi
 async function seedVocabularyMap(
   database: SQLite.SQLiteDatabase,
   vocabularyByCharacter: Record<string, { word: string; reading: string; meaning: string }[]>,
+  kanjiIdByCharacter: Map<string, number>,
+  seededKanjiIds: Set<number>,
 ): Promise<void> {
-  for (const [character, entries] of Object.entries(vocabularyByCharacter)) {
-    const kanjiRow = await database.getFirstAsync<{ id: number }>(
-      'SELECT id FROM kanji WHERE character = ?',
-      character,
-    );
-    if (!kanjiRow) continue;
+  await database.withTransactionAsync(async () => {
+    for (const [character, entries] of Object.entries(vocabularyByCharacter)) {
+      const kanjiId = kanjiIdByCharacter.get(character);
+      if (kanjiId == null || seededKanjiIds.has(kanjiId)) continue;
 
-    const existing = await database.getFirstAsync<{ count: number }>(
-      'SELECT COUNT(*) AS count FROM vocabulary WHERE kanji_id = ?',
-      kanjiRow.id,
-    );
-    if ((existing?.count ?? 0) > 0) continue;
-
-    let sortOrder = 0;
-    for (const entry of entries) {
-      await database.runAsync(
-        `INSERT INTO vocabulary (kanji_id, word, reading, meaning, sort_order)
-         VALUES (?, ?, ?, ?, ?)`,
-        kanjiRow.id,
-        entry.word,
-        entry.reading,
-        entry.meaning,
-        sortOrder,
-      );
-      sortOrder += 1;
+      let sortOrder = 0;
+      for (const entry of entries) {
+        await database.runAsync(
+          `INSERT INTO vocabulary (kanji_id, word, reading, meaning, sort_order)
+           VALUES (?, ?, ?, ?, ?)`,
+          kanjiId,
+          entry.word,
+          entry.reading,
+          entry.meaning,
+          sortOrder,
+        );
+        sortOrder += 1;
+      }
+      seededKanjiIds.add(kanjiId);
     }
-  }
+  });
 }
 
 async function seedVocabulary(database: SQLite.SQLiteDatabase): Promise<void> {
-  await seedVocabularyMap(database, N5_VOCABULARY_BY_CHARACTER);
-  await seedVocabularyMap(database, N4_VOCABULARY_BY_CHARACTER);
+  const vocabCount = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) AS count FROM vocabulary',
+  );
+  if ((vocabCount?.count ?? 0) > 0) return;
+
+  const kanjiRows = await database.getAllAsync<{ id: number; character: string }>(
+    'SELECT id, character FROM kanji',
+  );
+  const kanjiIdByCharacter = new Map(kanjiRows.map((row) => [row.character, row.id]));
+  const seededKanjiIds = new Set<number>();
+
+  await seedVocabularyMap(database, N5_VOCABULARY_BY_CHARACTER, kanjiIdByCharacter, seededKanjiIds);
+  await seedVocabularyMap(database, N4_VOCABULARY_BY_CHARACTER, kanjiIdByCharacter, seededKanjiIds);
+}
+
+function startVocabularySeedInBackground(): void {
+  if (!db || vocabularySeedPromise) return;
+
+  vocabularySeedPromise = seedVocabulary(db)
+    .catch((error) => {
+      console.warn('Background vocabulary seed failed:', error);
+      vocabularySeedPromise = null;
+    })
+    .then(() => undefined);
 }
 
 async function seedSettings(database: SQLite.SQLiteDatabase): Promise<void> {
@@ -221,11 +240,19 @@ export async function initDatabase(): Promise<void> {
     await db.execAsync(SCHEMA);
     await seedKanji(db);
     await migrateMissingKanji(db);
-    await seedVocabulary(db);
     await seedSettings(db);
+    startVocabularySeedInBackground();
   })();
 
   return initPromise;
+}
+
+/** Wait for background vocabulary seed (e.g. before study). */
+export async function ensureVocabularySeeded(): Promise<void> {
+  await initDatabase();
+  if (vocabularySeedPromise) {
+    await vocabularySeedPromise;
+  }
 }
 
 export function getDatabase(): SQLite.SQLiteDatabase {

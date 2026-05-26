@@ -17,6 +17,7 @@ import { Card } from '../components/ui/Card';
 import { ProgressRing } from '../components/ui/ProgressRing';
 import { Tag } from '../components/ui/Tag';
 import { useTheme } from '../context/ThemeContext';
+import { ensureVocabularySeeded } from '../db/database';
 import { getDeckStats } from '../services/progressService';
 import { getKanjiForLevel, prepareStudySession } from '../services/studyService';
 import { getVocabularyByKanjiIds } from '../services/vocabularyService';
@@ -154,11 +155,15 @@ export function LevelDetailScreen() {
       getDeckStats({ type: 'jlpt', level }),
       getKanjiForLevel(level),
     ]);
-    const vocab = await getVocabularyByKanjiIds(kanji.map((k) => k.id));
     setStats(deckStats);
     setKanjiList(kanji);
-    setVocabByKanji(vocab);
     setLoading(false);
+    const kanjiIds = kanji.map((k) => k.id);
+    setVocabByKanji(await getVocabularyByKanjiIds(kanjiIds));
+    ensureVocabularySeeded()
+      .then(() => getVocabularyByKanjiIds(kanjiIds))
+      .then(setVocabByKanji)
+      .catch(() => {});
   }, [level]);
 
   useFocusEffect(

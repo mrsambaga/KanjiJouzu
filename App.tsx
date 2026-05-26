@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -19,7 +19,7 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useSettingsStore } from './src/stores/settingsStore';
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function AppContent() {
   const { colors, isDark } = useTheme();
@@ -59,13 +59,15 @@ export default function App() {
   const hydrate = useSettingsStore((s) => s.hydrate);
   const [appReady, setAppReady] = useState(false);
 
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_600SemiBold,
     BeVietnamPro_600SemiBold,
     BeVietnamPro_700Bold,
     NotoSerifJP_400Regular,
   });
+
+  const fontsReady = fontsLoaded || fontError != null;
 
   useEffect(() => {
     async function prepare() {
@@ -80,18 +82,22 @@ export default function App() {
     prepare();
   }, [hydrate]);
 
-  const onLayoutRootView = useCallback(async () => {
-    if (appReady && fontsLoaded) {
-      await SplashScreen.hideAsync();
+  useEffect(() => {
+    if (appReady && fontsReady) {
+      SplashScreen.hideAsync().catch(() => {});
     }
-  }, [appReady, fontsLoaded]);
+  }, [appReady, fontsReady]);
 
-  if (!appReady || !fontsLoaded) {
-    return null;
+  if (!appReady || !fontsReady) {
+    return (
+      <View style={styles.boot}>
+        <ActivityIndicator size="large" color="#9c4143" />
+      </View>
+    );
   }
 
   return (
-    <GestureHandlerRootView style={styles.root} onLayout={onLayoutRootView}>
+    <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <ThemeProvider>
           <AppContent />
@@ -103,6 +109,12 @@ export default function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  boot: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff8f7',
+  },
   loading: {
     flex: 1,
     alignItems: 'center',
