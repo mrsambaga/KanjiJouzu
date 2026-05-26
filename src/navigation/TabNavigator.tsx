@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { TabParamList } from './types';
 import { useTheme } from '../context/ThemeContext';
@@ -23,6 +24,8 @@ const TAB_ICONS: Record<keyof TabParamList, { active: TabIconName; inactive: Tab
 
 export function TabNavigator() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const tabBarBottomInset = Math.max(insets.bottom, 8);
 
   return (
     <Tab.Navigator
@@ -33,8 +36,8 @@ export function TabNavigator() {
         tabBarStyle: {
           backgroundColor: colors.surfaceContainerLowest,
           borderTopColor: colors.outlineVariant,
-          height: 64,
-          paddingBottom: 8,
+          height: 56 + tabBarBottomInset,
+          paddingBottom: tabBarBottomInset,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
