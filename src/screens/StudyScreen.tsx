@@ -50,7 +50,10 @@ export function StudyScreen() {
       if (current.type === 'kanji') {
         await recordReview(current.kanji.id, remembered ? 'remembered' : 'difficult');
       } else {
-        await recordVocabularyReview();
+        await recordVocabularyReview(
+          current.vocabulary.id,
+          remembered ? 'remembered' : 'difficult',
+        );
       }
       recordSessionResult(remembered);
       nextCard();

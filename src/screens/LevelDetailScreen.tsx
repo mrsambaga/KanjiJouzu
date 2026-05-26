@@ -19,7 +19,11 @@ import { Tag } from '../components/ui/Tag';
 import { useTheme } from '../context/ThemeContext';
 import { ensureVocabularySeeded } from '../db/database';
 import { getDeckStats } from '../services/progressService';
-import { getKanjiForLevel, prepareStudySession } from '../services/studyService';
+import {
+  getDifficultStudyCardCount,
+  getKanjiForLevel,
+  prepareStudySession,
+} from '../services/studyService';
 import { getVocabularyByKanjiIds } from '../services/vocabularyService';
 import { useStudyStore } from '../stores/studyStore';
 import {
@@ -144,6 +148,7 @@ export function LevelDetailScreen() {
   const startSession = useStudyStore((s) => s.startSession);
 
   const [stats, setStats] = useState<DeckStats | null>(null);
+  const [difficultCardCount, setDifficultCardCount] = useState(0);
   const [kanjiList, setKanjiList] = useState<KanjiWithProgress[]>([]);
   const [vocabByKanji, setVocabByKanji] = useState<Map<number, Vocabulary[]>>(new Map());
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -151,11 +156,13 @@ export function LevelDetailScreen() {
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    const [deckStats, kanji] = await Promise.all([
+    const [deckStats, kanji, difficultCount] = await Promise.all([
       getDeckStats({ type: 'jlpt', level }),
       getKanjiForLevel(level),
+      getDifficultStudyCardCount({ type: 'jlpt', level }),
     ]);
     setStats(deckStats);
+    setDifficultCardCount(difficultCount);
     setKanjiList(kanji);
     setLoading(false);
     const kanjiIds = kanji.map((k) => k.id);
@@ -203,8 +210,6 @@ export function LevelDetailScreen() {
     );
   }
 
-  const difficultCount = stats?.difficult ?? 0;
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       <ScrollView
@@ -234,10 +239,10 @@ export function LevelDetailScreen() {
         <View style={styles.actions}>
           <Button title="Study all" onPress={() => launchStudy({ type: 'jlpt', level })} fullWidth />
           <Button
-            title={`Study difficult (${difficultCount} kanji)`}
+            title={`Study difficult (${difficultCardCount})`}
             variant="outline"
             onPress={() => launchStudy({ type: 'jlpt-difficult', level })}
-            disabled={difficultCount === 0}
+            disabled={difficultCardCount === 0}
             fullWidth
           />
         </View>

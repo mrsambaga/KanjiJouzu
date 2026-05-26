@@ -10,7 +10,11 @@ import { ProgressRing } from '../components/ui/ProgressRing';
 import { Tag } from '../components/ui/Tag';
 import { useTheme } from '../context/ThemeContext';
 import { getStudyStreak } from '../services/statsService';
-import { getDailyGoalProgress, prepareStudySession } from '../services/studyService';
+import {
+  getDailyGoalProgress,
+  getDifficultStudyCardCount,
+  prepareStudySession,
+} from '../services/studyService';
 import { getRecentlyStudied } from '../services/progressService';
 import { getDeckStats } from '../services/progressService';
 import { useStudyStore } from '../stores/studyStore';
@@ -29,20 +33,23 @@ export function HomeScreen() {
   const [dailyStudied, setDailyStudied] = useState(0);
   const [dailyGoal] = useState(20);
   const [deckStats, setDeckStats] = useState<DeckStats | null>(null);
+  const [difficultCardCount, setDifficultCardCount] = useState(0);
   const [recent, setRecent] = useState<KanjiWithProgress[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
-    const [streakVal, daily, stats, recentKanji] = await Promise.all([
+    const [streakVal, daily, stats, recentKanji, difficultCount] = await Promise.all([
       getStudyStreak(),
       getDailyGoalProgress(),
       getDeckStats({ type: 'all' }),
       getRecentlyStudied(5),
+      getDifficultStudyCardCount({ type: 'all' }),
     ]);
     setStreak(streakVal);
     setDailyStudied(daily.studied);
     setDeckStats(stats);
     setRecent(recentKanji);
+    setDifficultCardCount(difficultCount);
   }, []);
 
   useFocusEffect(
@@ -106,9 +113,10 @@ export function HomeScreen() {
           <Button title="Study N5" onPress={() => launchStudy({ type: 'jlpt', level: 'N5' })} fullWidth />
           <Button title="Study N4" onPress={() => launchStudy({ type: 'jlpt', level: 'N4' })} fullWidth />
           <Button
-            title="Review Difficult"
+            title={`Review Difficult (${difficultCardCount})`}
             variant="warning"
             onPress={() => launchStudy({ type: 'difficult' })}
+            disabled={difficultCardCount === 0}
             fullWidth
           />
           <Button

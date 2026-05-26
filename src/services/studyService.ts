@@ -1,5 +1,9 @@
 import { getCustomDeck } from './deckService';
-import { getDifficultKanji, getRecentlyStudied } from './progressService';
+import {
+  getDifficultKanji,
+  getDifficultVocabulary,
+  getRecentlyStudied,
+} from './progressService';
 import { getKanjiWithProgress } from './kanjiService';
 import { getStudyPosition, resetStudyPosition } from './studyPositionService';
 import { getVocabularyByKanjiIds } from './vocabularyService';
@@ -40,17 +44,16 @@ function prioritizeQueue(kanji: KanjiWithProgress[]): KanjiWithProgress[] {
 
 const VOCAB_PER_KANJI = 5;
 
-/** Difficult review = one card per kanji; count on the button matches the session. */
-function isKanjiOnlySession(source: StudySource): boolean {
-  return source.type === 'difficult' || source.type === 'jlpt-difficult';
-}
+export type DifficultStudyFilter = { type: 'all' } | { type: 'jlpt'; level: JlptLevel };
 
 function shouldResumeSavedPosition(source: StudySource): boolean {
   return source.type === 'jlpt' || source.type === 'custom';
 }
 
-function kanjiListToCards(kanjiList: KanjiWithProgress[]): StudyCard[] {
-  return kanjiList.map((kanji) => ({ type: 'kanji', kanji }));
+function toDifficultFilter(source: StudySource): DifficultStudyFilter | null {
+  if (source.type === 'difficult') return { type: 'all' };
+  if (source.type === 'jlpt-difficult') return { type: 'jlpt', level: source.level };
+  return null;
 }
 
 export async function expandQueueWithVocabulary(
@@ -68,6 +71,94 @@ export async function expandQueueWithVocabulary(
   }
 
   return cards;
+}
+
+/** Cards for difficult review: difficult kanji + their vocab, plus individually difficult vocabulary. */
+export async function buildDifficultStudyCards(
+  filter: DifficultStudyFilter,
+): Promise<StudyCard[]> {
+  await ensureVocabularySeeded();
+
+  const [allDifficultKanji, allDifficultVocab] = await Promise.all([
+    getDifficultKanji(),
+    getDifficultVocabulary(),
+  ]);
+
+  const difficultKanji =
+    filter.type === 'jlpt'
+      ? orderKanjiByLevel(filterKanjiByLevel(allDifficultKanji, filter.level), filter.level)
+      : allDifficultKanji;
+
+  const levelKanjiIds =
+    filter.type === 'jlpt'
+      ? new Set((await getKanjiForLevel(filter.level)).map((k) => k.id))
+      : null;
+
+  const difficultVocab = levelKanjiIds
+    ? allDifficultVocab.filter((v) => levelKanjiIds.has(v.kanjiId))
+    : allDifficultVocab;
+
+  const difficultKanjiIds = new Set(difficultKanji.map((k) => k.id));
+  const difficultVocabIds = new Set(difficultVocab.map((v) => v.id));
+
+  const extraParentIds = [
+    ...new Set(
+      difficultVocab.map((v) => v.kanjiId).filter((id) => !difficultKanjiIds.has(id)),
+    ),
+  ];
+  const extraKanji =
+    extraParentIds.length > 0 ? await getKanjiWithProgress(extraParentIds) : [];
+
+  const orderedKanji: KanjiWithProgress[] = [];
+  const seenKanji = new Set<number>();
+  for (const kanji of prioritizeQueue(difficultKanji)) {
+    if (seenKanji.has(kanji.id)) continue;
+    seenKanji.add(kanji.id);
+    orderedKanji.push(kanji);
+  }
+
+  const orderedExtra =
+    filter.type === 'jlpt' ? orderKanjiByLevel(extraKanji, filter.level) : extraKanji;
+  for (const kanji of orderedExtra) {
+    if (seenKanji.has(kanji.id)) continue;
+    seenKanji.add(kanji.id);
+    orderedKanji.push(kanji);
+  }
+
+  if (orderedKanji.length === 0) return [];
+
+  const vocabByKanji = await getVocabularyByKanjiIds(orderedKanji.map((k) => k.id));
+  const cards: StudyCard[] = [];
+
+  for (const kanji of orderedKanji) {
+    const vocabs = (vocabByKanji.get(kanji.id) ?? []).slice(0, VOCAB_PER_KANJI);
+    const isKanjiDifficult = difficultKanjiIds.has(kanji.id);
+
+    if (isKanjiDifficult) {
+      cards.push({ type: 'kanji', kanji });
+      for (const entry of vocabs) {
+        cards.push({ type: 'vocabulary', kanji, vocabulary: entry });
+      }
+      continue;
+    }
+
+    const difficultOnly = vocabs.filter((v) => difficultVocabIds.has(v.id));
+    if (difficultOnly.length === 0) continue;
+
+    cards.push({ type: 'kanji', kanji });
+    for (const entry of difficultOnly) {
+      cards.push({ type: 'vocabulary', kanji, vocabulary: entry });
+    }
+  }
+
+  return cards;
+}
+
+export async function getDifficultStudyCardCount(
+  filter: DifficultStudyFilter,
+): Promise<number> {
+  const cards = await buildDifficultStudyCards(filter);
+  return cards.length;
 }
 
 export async function getKanjiForLevel(level: JlptLevel): Promise<KanjiWithProgress[]> {
@@ -106,16 +197,19 @@ export async function buildStudyQueue(source: StudySource): Promise<KanjiWithPro
 export async function prepareStudySession(
   source: StudySource,
 ): Promise<{ queue: StudyCard[]; startIndex: number } | null> {
+  const difficultFilter = toDifficultFilter(source);
+  if (difficultFilter) {
+    const queue = await buildDifficultStudyCards(difficultFilter);
+    if (queue.length === 0) return null;
+    await resetStudyPosition(source);
+    return { queue, startIndex: 0 };
+  }
+
   const kanjiQueue = await buildStudyQueue(source);
   if (kanjiQueue.length === 0) return null;
 
-  const kanjiOnly = isKanjiOnlySession(source);
-  const queue = kanjiOnly
-    ? kanjiListToCards(kanjiQueue)
-    : await (async () => {
-        await ensureVocabularySeeded();
-        return expandQueueWithVocabulary(kanjiQueue);
-      })();
+  await ensureVocabularySeeded();
+  const queue = await expandQueueWithVocabulary(kanjiQueue);
 
   let startIndex = 0;
   if (shouldResumeSavedPosition(source)) {

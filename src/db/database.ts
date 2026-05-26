@@ -79,6 +79,14 @@ const SCHEMA = `
     sort_order INTEGER NOT NULL DEFAULT 0,
     UNIQUE (kanji_id, word)
   );
+
+  CREATE TABLE IF NOT EXISTS vocabulary_progress (
+    vocabulary_id INTEGER PRIMARY KEY REFERENCES vocabulary(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'new',
+    review_count INTEGER NOT NULL DEFAULT 0,
+    correct_count INTEGER NOT NULL DEFAULT 0,
+    last_reviewed_at TEXT
+  );
 `;
 
 const DEFAULT_SETTINGS: AppSettings = {

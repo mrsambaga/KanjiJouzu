@@ -10,7 +10,7 @@ export interface VocabularyRow {
   sort_order: number;
 }
 
-function mapVocabularyRow(row: VocabularyRow): Vocabulary {
+export function mapVocabularyRow(row: VocabularyRow): Vocabulary {
   return {
     id: row.id,
     kanjiId: row.kanji_id,

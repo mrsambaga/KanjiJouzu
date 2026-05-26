@@ -12,6 +12,8 @@ import {
   mapKanjiWithProgressRow,
   ProgressRow,
 } from './kanjiService';
+import { VocabularyRow, mapVocabularyRow } from './vocabularyService';
+import { Vocabulary } from '../types';
 
 export type ReviewResult = 'remembered' | 'difficult';
 
@@ -77,8 +79,74 @@ async function bumpDailyActivity(cardsStudied: number): Promise<void> {
   );
 }
 
-export async function recordVocabularyReview(): Promise<void> {
+interface VocabularyProgressRow {
+  vocabulary_id: number;
+  status: KanjiStatus;
+  review_count: number;
+  correct_count: number;
+  last_reviewed_at: string | null;
+}
+
+async function ensureVocabularyProgressRow(vocabularyId: number): Promise<VocabularyProgressRow> {
+  const db = getDatabase();
+  const existing = await db.getFirstAsync<VocabularyProgressRow>(
+    'SELECT * FROM vocabulary_progress WHERE vocabulary_id = ?',
+    vocabularyId,
+  );
+  if (existing) return existing;
+
+  await db.runAsync(
+    `INSERT INTO vocabulary_progress (vocabulary_id, status, review_count, correct_count)
+     VALUES (?, 'new', 0, 0)`,
+    vocabularyId,
+  );
+
+  return {
+    vocabulary_id: vocabularyId,
+    status: 'new',
+    review_count: 0,
+    correct_count: 0,
+    last_reviewed_at: null,
+  };
+}
+
+export async function recordVocabularyReview(
+  vocabularyId: number,
+  result: ReviewResult,
+): Promise<void> {
+  const db = getDatabase();
+  const now = new Date().toISOString();
+  const current = await ensureVocabularyProgressRow(vocabularyId);
+
+  const reviewCount = current.review_count + 1;
+  const correctCount =
+    result === 'remembered' ? current.correct_count + 1 : current.correct_count;
+  const status = nextStatus(current.status, result, correctCount);
+
+  await db.runAsync(
+    `UPDATE vocabulary_progress
+     SET status = ?, review_count = ?, correct_count = ?, last_reviewed_at = ?
+     WHERE vocabulary_id = ?`,
+    status,
+    reviewCount,
+    correctCount,
+    now,
+    vocabularyId,
+  );
+
   await bumpDailyActivity(1);
+}
+
+export async function getDifficultVocabulary(): Promise<Vocabulary[]> {
+  const db = getDatabase();
+  const rows = await db.getAllAsync<VocabularyRow>(
+    `SELECT v.*
+     FROM vocabulary v
+     INNER JOIN vocabulary_progress vp ON vp.vocabulary_id = v.id
+     WHERE vp.status = 'difficult'
+     ORDER BY vp.last_reviewed_at DESC`,
+  );
+  return rows.map(mapVocabularyRow);
 }
 
 export async function recordReview(
