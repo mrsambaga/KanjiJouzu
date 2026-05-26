@@ -5,6 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { kanaToRomaji } from './kanaToRomaji.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -557,7 +558,7 @@ for (const [k, word, reading, meaning] of ROWS) {
   if (!byKanji.has(k)) byKanji.set(k, []);
   const list = byKanji.get(k);
   if (list.some((e) => e.word === word)) continue;
-  list.push({ word, reading, meaning });
+  list.push({ word, reading, meaning, romaji: kanaToRomaji(reading) });
 }
 
 const lines = [
@@ -573,7 +574,8 @@ for (const [k, items] of [...byKanji.entries()].sort((a, b) => a[0].localeCompar
   for (const v of top) {
     const w = v.word.replace(/'/g, "\\'");
     const m = v.meaning.replace(/'/g, "\\'");
-    lines.push(`    { word: '${w}', reading: '${v.reading}', meaning: '${m}' },`);
+    const r = v.romaji.replace(/'/g, "\\'");
+    lines.push(`    { word: '${w}', reading: '${v.reading}', romaji: '${r}', meaning: '${m}' },`);
   }
   lines.push('  ],');
 }

@@ -81,11 +81,12 @@ export interface Vocabulary {
   kanjiId: number;
   word: string;
   reading: string;
+  romaji: string;
   meaning: string;
   sortOrder: number;
 }
 
-export type VocabularySeed = Pick<Vocabulary, 'word' | 'reading' | 'meaning'>;
+export type VocabularySeed = Pick<Vocabulary, 'word' | 'reading' | 'romaji' | 'meaning'>;
 
 export type StudyCard =
   | { type: 'kanji'; kanji: KanjiWithProgress }

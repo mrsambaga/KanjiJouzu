@@ -6,6 +6,7 @@ export interface VocabularyRow {
   kanji_id: number;
   word: string;
   reading: string;
+  romaji: string;
   meaning: string;
   sort_order: number;
 }
@@ -16,6 +17,7 @@ export function mapVocabularyRow(row: VocabularyRow): Vocabulary {
     kanjiId: row.kanji_id,
     word: row.word,
     reading: row.reading,
+    romaji: row.romaji ?? '',
     meaning: row.meaning,
     sortOrder: row.sort_order,
   };

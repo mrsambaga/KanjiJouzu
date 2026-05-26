@@ -3,6 +3,7 @@ import { N4_KANJI, N5_KANJI } from '../data/seedKanji';
 import { N4_VOCABULARY_BY_CHARACTER } from '../data/n4Vocabulary';
 import { N5_VOCABULARY_BY_CHARACTER } from '../data/n5Vocabulary';
 import { AppSettings } from '../types';
+import { kanaToRomaji } from '../utils/kanaToRomaji';
 
 const DB_NAME = 'kanji-jouzu.db';
 
@@ -75,6 +76,7 @@ const SCHEMA = `
     kanji_id INTEGER NOT NULL REFERENCES kanji(id) ON DELETE CASCADE,
     word TEXT NOT NULL,
     reading TEXT NOT NULL,
+    romaji TEXT NOT NULL DEFAULT '',
     meaning TEXT NOT NULL,
     sort_order INTEGER NOT NULL DEFAULT 0,
     UNIQUE (kanji_id, word)
@@ -169,9 +171,35 @@ async function migrateMissingKanji(database: SQLite.SQLiteDatabase): Promise<voi
   }
 }
 
+async function migrateVocabularyRomaji(database: SQLite.SQLiteDatabase): Promise<void> {
+  const cols = await database.getAllAsync<{ name: string }>('PRAGMA table_info(vocabulary)');
+  if (!cols.some((c) => c.name === 'romaji')) {
+    await database.execAsync('ALTER TABLE vocabulary ADD COLUMN romaji TEXT NOT NULL DEFAULT ""');
+  }
+
+  const rows = await database.getAllAsync<{ id: number; reading: string }>(
+    // Fix previously-generated romaji that still contains kana/combining marks (e.g. ka゙, anぜn).
+    `SELECT id, reading FROM vocabulary
+     WHERE romaji IS NULL
+        OR romaji = ''
+        OR romaji GLOB '*[ぁ-んァ-ン]*'
+        OR romaji GLOB '*[゙゚]*'`,
+  );
+  for (const row of rows) {
+    await database.runAsync(
+      'UPDATE vocabulary SET romaji = ? WHERE id = ?',
+      kanaToRomaji(row.reading),
+      row.id,
+    );
+  }
+}
+
 async function seedVocabularyMap(
   database: SQLite.SQLiteDatabase,
-  vocabularyByCharacter: Record<string, { word: string; reading: string; meaning: string }[]>,
+  vocabularyByCharacter: Record<
+    string,
+    { word: string; reading: string; romaji: string; meaning: string }[]
+  >,
   kanjiIdByCharacter: Map<string, number>,
   seededKanjiIds: Set<number>,
 ): Promise<void> {
@@ -182,12 +210,14 @@ async function seedVocabularyMap(
 
       let sortOrder = 0;
       for (const entry of entries) {
+        const romaji = entry.romaji?.trim() || kanaToRomaji(entry.reading);
         await database.runAsync(
-          `INSERT INTO vocabulary (kanji_id, word, reading, meaning, sort_order)
-           VALUES (?, ?, ?, ?, ?)`,
+          `INSERT INTO vocabulary (kanji_id, word, reading, romaji, meaning, sort_order)
+           VALUES (?, ?, ?, ?, ?, ?)`,
           kanjiId,
           entry.word,
           entry.reading,
+          romaji,
           entry.meaning,
           sortOrder,
         );
@@ -248,6 +278,7 @@ export async function initDatabase(): Promise<void> {
     await db.execAsync(SCHEMA);
     await seedKanji(db);
     await migrateMissingKanji(db);
+    await migrateVocabularyRomaji(db);
     await seedSettings(db);
     startVocabularySeedInBackground();
   })();

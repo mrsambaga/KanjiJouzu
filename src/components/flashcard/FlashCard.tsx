@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { Pressable, Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Button } from '../ui/Button';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,11 +14,25 @@ interface FlashCardProps {
   mode?: 'study' | 'preview';
 }
 
+function RomajiText({
+  romaji,
+  style,
+}: {
+  romaji: string | undefined;
+  style: StyleProp<TextStyle>;
+}) {
+  const trimmed = romaji?.trim();
+  if (!trimmed) return null;
+  return <Text style={style}>{trimmed}</Text>;
+}
+
 export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCardProps) {
   const { colors, typography, fontScale, scaledFontSize } = useTheme();
   const showRomaji = useSettingsStore((s) => s.showRomaji);
   const kanjiSize = scaledFontSize(typography.displayKanji.fontSize, fontScale);
   const isPreview = mode === 'preview';
+  const romajiStyle = [styles.romaji, { color: colors.primary }];
+  const romajiMutedStyle = [styles.romaji, { color: colors.onSurfaceVariant }];
 
   const cardShell = (face: React.ReactNode) => (
     <View
@@ -99,11 +113,9 @@ export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCard
       >
         <Text style={[styles.meaning, { color: colors.onSurface }]}>{vocabulary.meaning}</Text>
         <Text style={[styles.reading, { color: colors.primary }]}>{vocabulary.reading}</Text>
-        {showRomaji && (
-          <Text style={[styles.romaji, { color: colors.onSurfaceVariant }]}>
-            {card.kanji.character} — {card.kanji.meaning}
-          </Text>
-        )}
+        {showRomaji ? (
+          <RomajiText romaji={vocabulary.romaji} style={romajiMutedStyle} />
+        ) : null}
       </Animated.View>
     );
 
@@ -145,7 +157,7 @@ export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCard
       style={styles.face}
     >
       <Text style={[styles.meaning, { color: colors.onSurface }]}>{kanji.meaning}</Text>
-      {showRomaji && <Text style={[styles.romaji, { color: colors.primary }]}>{kanji.romaji}</Text>}
+      {showRomaji ? <RomajiText romaji={kanji.romaji} style={romajiStyle} /> : null}
       {kanji.onyomi ? (
         <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>On: {kanji.onyomi}</Text>
       ) : null}
