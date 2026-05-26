@@ -33,7 +33,7 @@ export function StudyScreen() {
 
   const current = queue[currentIndex];
   const deckProgress = queue.length > 0 ? (currentIndex + 1) / queue.length : 0;
-  const sessionComplete = !isActive && sessionTotal > 0;
+  const sessionComplete = !isActive && sessionTotal > 0 && queue.length > 0;
   const canGoNext = currentIndex < queue.length - 1;
   const canGoPrevious = currentIndex > 0;
 

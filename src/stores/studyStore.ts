@@ -66,7 +66,11 @@ export const useStudyStore = create<StudyState>((set, get) => ({
     const { currentIndex, queue, source } = get();
     if (currentIndex >= queue.length - 1) {
       if (source) resetStudyPosition(source).catch(console.warn);
-      set({ isActive: false, showAnswer: false });
+      set({
+        isActive: false,
+        showAnswer: false,
+        currentIndex: 0,
+      });
       return;
     }
     const newIndex = currentIndex + 1;

@@ -234,7 +234,7 @@ export function LevelDetailScreen() {
         <View style={styles.actions}>
           <Button title="Study all" onPress={() => launchStudy({ type: 'jlpt', level })} fullWidth />
           <Button
-            title={`Study difficult (${difficultCount})`}
+            title={`Study difficult (${difficultCount} kanji)`}
             variant="outline"
             onPress={() => launchStudy({ type: 'jlpt-difficult', level })}
             disabled={difficultCount === 0}

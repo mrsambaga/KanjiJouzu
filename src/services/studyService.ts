@@ -1,7 +1,7 @@
 import { getCustomDeck } from './deckService';
 import { getDifficultKanji, getRecentlyStudied } from './progressService';
 import { getKanjiWithProgress } from './kanjiService';
-import { getStudyPosition } from './studyPositionService';
+import { getStudyPosition, resetStudyPosition } from './studyPositionService';
 import { getVocabularyByKanjiIds } from './vocabularyService';
 import { N4_KANJI_CHARACTERS, N4_KANJI_CHARACTER_SET } from '../data/n4Kanji';
 import { N5_KANJI_CHARACTERS, N5_KANJI_CHARACTER_SET } from '../data/n5Kanji';
@@ -39,6 +39,19 @@ function prioritizeQueue(kanji: KanjiWithProgress[]): KanjiWithProgress[] {
 }
 
 const VOCAB_PER_KANJI = 5;
+
+/** Difficult review = one card per kanji; count on the button matches the session. */
+function isKanjiOnlySession(source: StudySource): boolean {
+  return source.type === 'difficult' || source.type === 'jlpt-difficult';
+}
+
+function shouldResumeSavedPosition(source: StudySource): boolean {
+  return source.type === 'jlpt' || source.type === 'custom';
+}
+
+function kanjiListToCards(kanjiList: KanjiWithProgress[]): StudyCard[] {
+  return kanjiList.map((kanji) => ({ type: 'kanji', kanji }));
+}
 
 export async function expandQueueWithVocabulary(
   kanjiList: KanjiWithProgress[],
@@ -96,10 +109,22 @@ export async function prepareStudySession(
   const kanjiQueue = await buildStudyQueue(source);
   if (kanjiQueue.length === 0) return null;
 
-  await ensureVocabularySeeded();
-  const queue = await expandQueueWithVocabulary(kanjiQueue);
-  const savedIndex = await getStudyPosition(source);
-  const startIndex = Math.min(Math.max(0, savedIndex), queue.length - 1);
+  const kanjiOnly = isKanjiOnlySession(source);
+  const queue = kanjiOnly
+    ? kanjiListToCards(kanjiQueue)
+    : await (async () => {
+        await ensureVocabularySeeded();
+        return expandQueueWithVocabulary(kanjiQueue);
+      })();
+
+  let startIndex = 0;
+  if (shouldResumeSavedPosition(source)) {
+    const savedIndex = await getStudyPosition(source);
+    startIndex = Math.min(Math.max(0, savedIndex), Math.max(0, queue.length - 1));
+  } else {
+    await resetStudyPosition(source);
+  }
+
   return { queue, startIndex };
 }
 
