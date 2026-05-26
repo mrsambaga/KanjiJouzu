@@ -14,7 +14,7 @@ import { getDailyGoalProgress, prepareStudySession } from '../services/studyServ
 import { getRecentlyStudied } from '../services/progressService';
 import { getDeckStats } from '../services/progressService';
 import { useStudyStore } from '../stores/studyStore';
-import { KanjiWithProgress } from '../types';
+import { DeckStats, KanjiWithProgress } from '../types';
 import { RootStackParamList } from '../navigation/types';
 import { spacing } from '../theme';
 
@@ -28,7 +28,7 @@ export function HomeScreen() {
   const [streak, setStreak] = useState(0);
   const [dailyStudied, setDailyStudied] = useState(0);
   const [dailyGoal] = useState(20);
-  const [overallProgress, setOverallProgress] = useState(0);
+  const [deckStats, setDeckStats] = useState<DeckStats | null>(null);
   const [recent, setRecent] = useState<KanjiWithProgress[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -41,7 +41,7 @@ export function HomeScreen() {
     ]);
     setStreak(streakVal);
     setDailyStudied(daily.studied);
-    setOverallProgress(stats.progressPercent / 100);
+    setDeckStats(stats);
     setRecent(recentKanji);
   }, []);
 
@@ -89,10 +89,15 @@ export function HomeScreen() {
             </Text>
           </Card>
           <Card style={styles.statCard}>
-            <ProgressRing progress={overallProgress} size={72} />
+            <ProgressRing progress={(deckStats?.progressPercent ?? 0) / 100} size={72} />
             <Text style={[styles.statLabel, { color: colors.onSurfaceVariant, marginTop: spacing.sm }]}>
-              Mastered
+              Studied
             </Text>
+            {deckStats ? (
+              <Text style={[styles.statSubLabel, { color: colors.onSurfaceVariant }]}>
+                {deckStats.studied}/{deckStats.total}
+              </Text>
+            ) : null}
           </Card>
         </View>
 
@@ -167,6 +172,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
     textAlign: 'center',
+  },
+  statSubLabel: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 2,
   },
   sectionTitle: {
     fontFamily: 'BeVietnamPro_600SemiBold',

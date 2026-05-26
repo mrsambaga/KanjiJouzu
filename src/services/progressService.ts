@@ -24,7 +24,7 @@ function mapDeckStatsRow(row: {
   difficult: number;
 }): DeckStats {
   const progressPercent =
-    row.total === 0 ? 0 : Math.round((row.mastered / row.total) * 100);
+    row.total === 0 ? 0 : Math.round((row.studied / row.total) * 100);
   return {
     total: row.total,
     studied: row.studied,

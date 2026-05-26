@@ -33,7 +33,7 @@ function LevelCard({ level, stats, onPress }: LevelCardProps) {
       </View>
       <Text style={[styles.levelTitle, { color: colors.onSurface }]}>JLPT {level}</Text>
       <Text style={[styles.levelMeta, { color: colors.onSurfaceVariant }]}>
-        {stats.mastered} mastered · {stats.total} total
+        {stats.studied} studied · {stats.total} total
       </Text>
     </Card>
   );
@@ -131,7 +131,7 @@ function DeckRow({ deck, onPress }: { deck: CustomDeck; onPress: () => void }) {
         <Text style={[styles.deckName, { color: colors.onSurface }]}>{deck.name}</Text>
         <Text style={[styles.deckMeta, { color: colors.onSurfaceVariant }]}>
           {deck.kanjiIds.length} kanji
-          {stats ? ` · ${stats.progressPercent}% mastered` : ''}
+          {stats ? ` · ${stats.progressPercent}% studied` : ''}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color={colors.onSurfaceVariant} />

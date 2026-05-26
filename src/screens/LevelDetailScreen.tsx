@@ -225,8 +225,8 @@ export function LevelDetailScreen() {
               <ProgressRing progress={stats.progressPercent / 100} size={72} strokeWidth={6} />
             </View>
             <Text style={[styles.progressMeta, { color: colors.onSurfaceVariant }]}>
-              {stats.mastered} mastered · {stats.studied} studied · {stats.difficult} difficult · {stats.total}{' '}
-              total
+              {stats.studied} studied · {stats.difficult} difficult · {stats.total} total ·{' '}
+              {stats.progressPercent}%
             </Text>
           </Card>
         )}
