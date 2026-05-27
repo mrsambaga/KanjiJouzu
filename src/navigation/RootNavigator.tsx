@@ -6,6 +6,7 @@ import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { StudyScreen } from '../screens/StudyScreen';
 import { LevelDetailScreen } from '../screens/LevelDetailScreen';
 import { CardPreviewScreen } from '../screens/CardPreviewScreen';
+import { KanjiVocabularyScreen } from '../screens/KanjiVocabularyScreen';
 import { DeckDetailScreen } from '../screens/DeckDetailScreen';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useTheme } from '../context/ThemeContext';
@@ -53,6 +54,11 @@ export function RootNavigator() {
         name="CardPreview"
         component={CardPreviewScreen}
         options={{ title: 'Preview', presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="KanjiVocabulary"
+        component={KanjiVocabularyScreen}
+        options={{ title: 'Vocabulary Examples' }}
       />
       <Stack.Screen
         name="DeckDetail"

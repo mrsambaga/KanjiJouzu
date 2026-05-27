@@ -116,6 +116,17 @@ export async function getKanjiByIds(ids: number[]): Promise<Kanji[]> {
   return rows.map(mapKanjiRow);
 }
 
+export async function getKanjiIdByCharacter(character: string): Promise<number | null> {
+  const trimmed = character.trim();
+  if (!trimmed) return null;
+  const db = getDatabase();
+  const row = await db.getFirstAsync<{ id: number }>(
+    'SELECT id FROM kanji WHERE character = ? LIMIT 1',
+    trimmed,
+  );
+  return row?.id ?? null;
+}
+
 export async function getKanjiWithProgress(ids?: number[]): Promise<KanjiWithProgress[]> {
   const db = getDatabase();
 

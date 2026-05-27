@@ -1,11 +1,15 @@
 import React from 'react';
 import { Pressable, Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Button } from '../ui/Button';
 import { useTheme } from '../../context/ThemeContext';
 import { KanjiWithProgress, StudyCard } from '../../types';
 import { radius, spacing } from '../../theme';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { RootStackParamList } from '../../navigation/types';
+import { getKanjiIdByCharacter } from '../../services/kanjiService';
 
 interface FlashCardProps {
   card: StudyCard;
@@ -13,6 +17,8 @@ interface FlashCardProps {
   onFlip: () => void;
   mode?: 'study' | 'preview';
 }
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 function RomajiText({
   romaji,
@@ -26,13 +32,29 @@ function RomajiText({
   return <Text style={style}>{trimmed}</Text>;
 }
 
+function isKanjiChar(ch: string): boolean {
+  // Covers common CJK Unified Ideographs + Extension A.
+  return /[\u3400-\u9FFF]/.test(ch);
+}
+
 export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCardProps) {
   const { colors, typography, fontScale, scaledFontSize } = useTheme();
   const showRomaji = useSettingsStore((s) => s.showRomaji);
+  const navigation = useNavigation<Nav>();
   const kanjiSize = scaledFontSize(typography.displayKanji.fontSize, fontScale);
   const isPreview = mode === 'preview';
   const romajiStyle = [styles.romaji, { color: colors.primary }];
   const romajiMutedStyle = [styles.romaji, { color: colors.onSurfaceVariant }];
+  const tappableKanjiStyle = [styles.tappableKanji, { color: colors.primary }];
+
+  const openKanjiByCharacter = React.useCallback(
+    async (character: string) => {
+      const id = await getKanjiIdByCharacter(character);
+      if (!id) return; // skip if not in DB (e.g. N2/N3)
+      navigation.navigate('CardPreview', { type: 'kanji', kanjiId: id });
+    },
+    [navigation],
+  );
 
   const cardShell = (face: React.ReactNode) => (
     <View
@@ -101,7 +123,19 @@ export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCard
             },
           ]}
         >
-          {vocabulary.word}
+          {[...vocabulary.word].map((ch, idx) => {
+            if (!isKanjiChar(ch)) return <Text key={`${idx}-${ch}`}>{ch}</Text>;
+            return (
+              <Text
+                key={`${idx}-${ch}`}
+                style={tappableKanjiStyle}
+                onPress={() => openKanjiByCharacter(ch)}
+                suppressHighlighting
+              >
+                {ch}
+              </Text>
+            );
+          })}
         </Text>
       </Animated.View>
     ) : (
@@ -145,6 +179,8 @@ export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCard
             letterSpacing: typography.displayKanji.letterSpacing,
           },
         ]}
+        onPress={() => openKanjiByCharacter(kanji.character)}
+        suppressHighlighting
       >
         {kanji.character}
       </Text>
@@ -219,6 +255,9 @@ const styles = StyleSheet.create({
   },
   kanji: {
     textAlign: 'center',
+  },
+  tappableKanji: {
+    textDecorationLine: 'underline',
   },
   vocabLabel: {
     fontFamily: 'Inter_400Regular',

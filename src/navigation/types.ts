@@ -15,6 +15,7 @@ export type RootStackParamList = {
   Study: undefined;
   LevelDetail: { level: JlptLevel };
   CardPreview: CardPreviewParams;
+  KanjiVocabulary: { kanjiId: number };
   DeckDetail: { deckId: number };
 };
 

@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashCard } from '../components/flashcard/FlashCard';
+import { Button } from '../components/ui/Button';
 import { useTheme } from '../context/ThemeContext';
 import { getKanjiWithProgress } from '../services/kanjiService';
 import { getVocabularyForKanji } from '../services/vocabularyService';
@@ -11,10 +13,12 @@ import { StudyCard } from '../types';
 import { spacing } from '../theme';
 
 type Route = RouteProp<RootStackParamList, 'CardPreview'>;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export function CardPreviewScreen() {
   const { colors } = useTheme();
   const route = useRoute<Route>();
+  const navigation = useNavigation<Nav>();
   const [card, setCard] = useState<StudyCard | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -61,6 +65,16 @@ export function CardPreviewScreen() {
             onFlip={() => setIsFlipped((f) => !f)}
             mode="preview"
           />
+          {card.type === 'kanji' ? (
+            <View style={styles.actions}>
+              <Button
+                title="Vocabulary examples"
+                variant="outline"
+                onPress={() => navigation.navigate('KanjiVocabulary', { kanjiId: card.kanji.id })}
+                fullWidth
+              />
+            </View>
+          ) : null}
         </View>
       ) : null}
     </SafeAreaView>
@@ -81,5 +95,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingVertical: spacing.lg,
+    gap: spacing.md,
+  },
+  actions: {
+    paddingHorizontal: spacing.lg,
   },
 });
