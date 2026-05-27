@@ -12,3 +12,31 @@ web-build/
 .env
 .env.*
 *.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Expo / React Native
+.expo-shared/
+*.tsbuildinfo
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.keystore
+
+# iOS / Xcode
+ios/Pods/
+ios/build/
+*.xcworkspace
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+
+# Android Studio device streaming / emulator config (often generated)
+**/deviceStreaming*.xml
