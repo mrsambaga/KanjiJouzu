@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { FlashCard } from './FlashCard';
+import { ReviewFlashCard } from './ReviewFlashCard';
 import { StudyCard } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { spacing } from '../../theme';
@@ -108,7 +109,15 @@ export function SwipeableFlashCard({
 
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.cardWrapper, cardStyle]}>
-          <FlashCard card={card} isFlipped={isFlipped} onFlip={onFlip} />
+          {card.type === 'main-vocabulary' || card.type === 'grammar' ? (
+            <ReviewFlashCard card={card} isFlipped={isFlipped} onFlip={onFlip} />
+          ) : (
+            <FlashCard
+              card={card as Extract<StudyCard, { type: 'kanji' } | { type: 'vocabulary' }>}
+              isFlipped={isFlipped}
+              onFlip={onFlip}
+            />
+          )}
         </Animated.View>
       </GestureDetector>
     </View>

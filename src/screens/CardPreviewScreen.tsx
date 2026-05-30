@@ -10,7 +10,11 @@ import { useTheme } from '../context/ThemeContext';
 import { getKanjiWithProgress } from '../services/kanjiService';
 import { getVocabularyForKanji } from '../services/vocabularyService';
 import { RootStackParamList } from '../navigation/types';
-import { StudyCard } from '../types';
+import { KanjiWithProgress, Vocabulary } from '../types';
+
+type PreviewCard =
+  | { type: 'kanji'; kanji: KanjiWithProgress }
+  | { type: 'vocabulary'; kanji: KanjiWithProgress; vocabulary: Vocabulary };
 import { spacing } from '../theme';
 import { useSettingsStore } from '../stores/settingsStore';
 
@@ -22,7 +26,7 @@ export function CardPreviewScreen() {
   const route = useRoute<Route>();
   const navigation = useNavigation<Nav>();
   const showRomaji = useSettingsStore((s) => s.showRomaji);
-  const [card, setCard] = useState<StudyCard | null>(null);
+  const [card, setCard] = useState<PreviewCard | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadCard = useCallback(async () => {

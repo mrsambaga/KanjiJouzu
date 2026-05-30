@@ -19,7 +19,7 @@ export function OnboardingScreen() {
 
   const handleStart = async () => {
     await setOnboardingComplete(true);
-    navigation.replace('Main');
+    navigation.replace('Main', { screen: 'Home' });
   };
 
   return (

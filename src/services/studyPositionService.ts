@@ -7,6 +7,10 @@ export function studySourceKey(source: StudySource): string {
       return `jlpt:${source.level}`;
     case 'jlpt-difficult':
       return `jlpt-difficult:${source.level}`;
+    case 'jlpt-vocab':
+      return `jlpt-vocab:${source.level}`;
+    case 'jlpt-grammar':
+      return `jlpt-grammar:${source.level}`;
     case 'custom':
       return `custom:${source.deckId}`;
     case 'difficult':

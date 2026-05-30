@@ -9,6 +9,10 @@ import { Button } from '../components/ui/Button';
 import { useTheme } from '../context/ThemeContext';
 import { useStudyStore } from '../stores/studyStore';
 import { recordReview, recordVocabularyReview } from '../services/progressService';
+import {
+  recordGrammarReview,
+  recordMainVocabularyReview,
+} from '../services/materialProgressService';
 import { RootStackParamList } from '../navigation/types';
 import { spacing } from '../theme';
 
@@ -49,11 +53,18 @@ export function StudyScreen() {
       if (!current) return;
       if (current.type === 'kanji') {
         await recordReview(current.kanji.id, remembered ? 'remembered' : 'difficult');
-      } else {
+      } else if (current.type === 'vocabulary') {
         await recordVocabularyReview(
           current.vocabulary.id,
           remembered ? 'remembered' : 'difficult',
         );
+      } else if (current.type === 'main-vocabulary') {
+        await recordMainVocabularyReview(
+          current.item.id,
+          remembered ? 'remembered' : 'difficult',
+        );
+      } else {
+        await recordGrammarReview(current.item.id, remembered ? 'remembered' : 'difficult');
       }
       recordSessionResult(remembered);
       nextCard();
@@ -112,7 +123,11 @@ export function StudyScreen() {
             key={
               current.type === 'kanji'
                 ? `k-${current.kanji.id}`
-                : `v-${current.vocabulary.id}`
+                : current.type === 'vocabulary'
+                  ? `v-${current.vocabulary.id}`
+                  : current.type === 'main-vocabulary'
+                    ? `mv-${current.item.id}`
+                    : `g-${current.item.id}`
             }
             card={current}
             isFlipped={showAnswer}

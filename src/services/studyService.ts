@@ -9,7 +9,8 @@ import { getStudyPosition, resetStudyPosition } from './studyPositionService';
 import { getVocabularyByKanjiIds } from './vocabularyService';
 import { N4_KANJI_CHARACTERS, N4_KANJI_CHARACTER_SET } from '../data/n4Kanji';
 import { N5_KANJI_CHARACTERS, N5_KANJI_CHARACTER_SET } from '../data/n5Kanji';
-import { ensureVocabularySeeded, getDatabase, todayDateString } from '../db/database';
+import { ensureMaterialSeeded, ensureVocabularySeeded, getDatabase, todayDateString } from '../db/database';
+import { getGrammarForLevel, getMainVocabularyForLevel } from './materialService';
 import { KanjiWithProgress, JlptLevel, StudyCard, StudySource } from '../types';
 
 const N4_ORDER = new Map(N4_KANJI_CHARACTERS.map((character, index) => [character, index]));
@@ -47,7 +48,12 @@ const VOCAB_PER_KANJI = 5;
 export type DifficultStudyFilter = { type: 'all' } | { type: 'jlpt'; level: JlptLevel };
 
 function shouldResumeSavedPosition(source: StudySource): boolean {
-  return source.type === 'jlpt' || source.type === 'custom';
+  return (
+    source.type === 'jlpt' ||
+    source.type === 'custom' ||
+    source.type === 'jlpt-vocab' ||
+    source.type === 'jlpt-grammar'
+  );
 }
 
 function toDifficultFilter(source: StudySource): DifficultStudyFilter | null {
@@ -203,6 +209,28 @@ export async function prepareStudySession(
     if (queue.length === 0) return null;
     await resetStudyPosition(source);
     return { queue, startIndex: 0 };
+  }
+
+  if (source.type === 'jlpt-vocab') {
+    await ensureMaterialSeeded();
+    const items = await getMainVocabularyForLevel(source.level);
+    if (items.length === 0) return null;
+    const queue: StudyCard[] = items.map((item) => ({ type: 'main-vocabulary', item }));
+    let startIndex = 0;
+    const savedIndex = await getStudyPosition(source);
+    startIndex = Math.min(Math.max(0, savedIndex), Math.max(0, queue.length - 1));
+    return { queue, startIndex };
+  }
+
+  if (source.type === 'jlpt-grammar') {
+    await ensureMaterialSeeded();
+    const items = await getGrammarForLevel(source.level);
+    if (items.length === 0) return null;
+    const queue: StudyCard[] = items.map((item) => ({ type: 'grammar', item }));
+    let startIndex = 0;
+    const savedIndex = await getStudyPosition(source);
+    startIndex = Math.min(Math.max(0, savedIndex), Math.max(0, queue.length - 1));
+    return { queue, startIndex };
   }
 
   const kanjiQueue = await buildStudyQueue(source);

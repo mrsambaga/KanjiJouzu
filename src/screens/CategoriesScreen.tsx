@@ -8,31 +8,36 @@ import { Card } from '../components/ui/Card';
 import { ProgressRing } from '../components/ui/ProgressRing';
 import { Tag } from '../components/ui/Tag';
 import { useTheme } from '../context/ThemeContext';
+import { ensureMaterialSeeded } from '../db/database';
 import { getDeckStats } from '../services/progressService';
 import { getCustomDecks } from '../services/deckService';
+import { getGrammarStats, getMainVocabularyStats } from '../services/materialService';
 import { DeckStats, CustomDeck, JlptLevel } from '../types';
 import { RootStackParamList } from '../navigation/types';
 import { spacing, radius } from '../theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-interface LevelCardProps {
+interface MaterialCardProps {
   level: JlptLevel;
+  label: string;
   stats: DeckStats;
   onPress: () => void;
 }
 
-function LevelCard({ level, stats, onPress }: LevelCardProps) {
+function MaterialCard({ level, label, stats, onPress }: MaterialCardProps) {
   const { colors } = useTheme();
 
   return (
-    <Card onPress={onPress} style={styles.levelCard}>
-      <View style={styles.levelHeader}>
-        <Tag label={level} variant="primary" />
-        <ProgressRing progress={stats.progressPercent / 100} size={56} strokeWidth={5} />
+    <Card onPress={onPress} style={styles.materialCard}>
+      <View style={styles.materialHeader}>
+        <View style={styles.materialTags}>
+          <Tag label={level} variant="primary" />
+          <Text style={[styles.materialLabel, { color: colors.onSurface }]}>{label}</Text>
+        </View>
+        <ProgressRing progress={stats.progressPercent / 100} size={48} strokeWidth={4} />
       </View>
-      <Text style={[styles.levelTitle, { color: colors.onSurface }]}>JLPT {level}</Text>
-      <Text style={[styles.levelMeta, { color: colors.onSurfaceVariant }]}>
+      <Text style={[styles.materialMeta, { color: colors.onSurfaceVariant }]}>
         {stats.studied} studied · {stats.total} total
       </Text>
     </Card>
@@ -43,19 +48,32 @@ export function CategoriesScreen() {
   const { colors, typography } = useTheme();
   const navigation = useNavigation<Nav>();
 
-  const [n5Stats, setN5Stats] = useState<DeckStats | null>(null);
-  const [n4Stats, setN4Stats] = useState<DeckStats | null>(null);
+  const [n5Kanji, setN5Kanji] = useState<DeckStats | null>(null);
+  const [n4Kanji, setN4Kanji] = useState<DeckStats | null>(null);
+  const [n5Vocab, setN5Vocab] = useState<DeckStats | null>(null);
+  const [n4Vocab, setN4Vocab] = useState<DeckStats | null>(null);
+  const [n5Grammar, setN5Grammar] = useState<DeckStats | null>(null);
+  const [n4Grammar, setN4Grammar] = useState<DeckStats | null>(null);
   const [decks, setDecks] = useState<CustomDeck[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
-    const [n5, n4, customDecks] = await Promise.all([
+    await ensureMaterialSeeded();
+    const [n5k, n4k, n5v, n4v, n5g, n4g, customDecks] = await Promise.all([
       getDeckStats({ type: 'jlpt', level: 'N5' }),
       getDeckStats({ type: 'jlpt', level: 'N4' }),
+      getMainVocabularyStats('N5'),
+      getMainVocabularyStats('N4'),
+      getGrammarStats('N5'),
+      getGrammarStats('N4'),
       getCustomDecks(),
     ]);
-    setN5Stats(n5);
-    setN4Stats(n4);
+    setN5Kanji(n5k);
+    setN4Kanji(n4k);
+    setN5Vocab(n5v);
+    setN4Vocab(n4v);
+    setN5Grammar(n5g);
+    setN4Grammar(n4g);
     setDecks(customDecks);
   }, []);
 
@@ -71,23 +89,76 @@ export function CategoriesScreen() {
     setRefreshing(false);
   };
 
-  const openLevel = (level: JlptLevel) => {
-    navigation.navigate('LevelDetail', { level });
-  };
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
-        <Text style={[typography.headlineLg, { color: colors.onBackground }]}>Categories</Text>
+        <Text style={[typography.headlineLg, { color: colors.onBackground }]}>Levels</Text>
         <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
-          Choose a JLPT level or custom deck to study
+          Kanji, vocabulary, and grammar by JLPT level
         </Text>
 
-        {n5Stats && <LevelCard level="N5" stats={n5Stats} onPress={() => openLevel('N5')} />}
-        {n4Stats && <LevelCard level="N4" stats={n4Stats} onPress={() => openLevel('N4')} />}
+        <Text style={[styles.groupTitle, { color: colors.onSurface }]}>N5</Text>
+        {n5Kanji && (
+          <MaterialCard
+            level="N5"
+            label="Kanji"
+            stats={n5Kanji}
+            onPress={() => navigation.navigate('LevelDetail', { level: 'N5' })}
+          />
+        )}
+        {n5Vocab && (
+          <MaterialCard
+            level="N5"
+            label="Vocabulary"
+            stats={n5Vocab}
+            onPress={() =>
+              navigation.navigate('MaterialLevelDetail', { level: 'N5', contentType: 'vocabulary' })
+            }
+          />
+        )}
+        {n5Grammar && (
+          <MaterialCard
+            level="N5"
+            label="Grammar"
+            stats={n5Grammar}
+            onPress={() =>
+              navigation.navigate('MaterialLevelDetail', { level: 'N5', contentType: 'grammar' })
+            }
+          />
+        )}
+
+        <Text style={[styles.groupTitle, { color: colors.onSurface }]}>N4</Text>
+        {n4Kanji && (
+          <MaterialCard
+            level="N4"
+            label="Kanji"
+            stats={n4Kanji}
+            onPress={() => navigation.navigate('LevelDetail', { level: 'N4' })}
+          />
+        )}
+        {n4Vocab && (
+          <MaterialCard
+            level="N4"
+            label="Vocabulary"
+            stats={n4Vocab}
+            onPress={() =>
+              navigation.navigate('MaterialLevelDetail', { level: 'N4', contentType: 'vocabulary' })
+            }
+          />
+        )}
+        {n4Grammar && (
+          <MaterialCard
+            level="N4"
+            label="Grammar"
+            stats={n4Grammar}
+            onPress={() =>
+              navigation.navigate('MaterialLevelDetail', { level: 'N4', contentType: 'grammar' })
+            }
+          />
+        )}
 
         <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>Custom Decks</Text>
         {decks.length === 0 ? (
@@ -143,7 +214,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: {
     padding: spacing.containerPadding,
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingBottom: spacing.xl,
   },
   subtitle: {
@@ -151,26 +222,31 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginBottom: spacing.sm,
   },
-  levelCard: {
-    gap: spacing.sm,
+  groupTitle: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: 16,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
-  levelHeader: {
+  materialCard: { gap: spacing.xs },
+  materialHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  levelTitle: {
+  materialTags: { gap: spacing.xs },
+  materialLabel: {
     fontFamily: 'BeVietnamPro_700Bold',
-    fontSize: 22,
+    fontSize: 20,
   },
-  levelMeta: {
+  materialMeta: {
     fontFamily: 'Inter_400Regular',
-    fontSize: 14,
+    fontSize: 13,
   },
   sectionTitle: {
     fontFamily: 'BeVietnamPro_600SemiBold',
     fontSize: 18,
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
   },
   emptyDeck: {
     alignItems: 'center',

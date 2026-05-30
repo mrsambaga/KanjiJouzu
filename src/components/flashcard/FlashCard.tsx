@@ -6,13 +6,15 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Button } from '../ui/Button';
 import { useTheme } from '../../context/ThemeContext';
 import { KanjiWithProgress, StudyCard } from '../../types';
+
+type KanjiStudyCard = Extract<StudyCard, { type: 'kanji' } | { type: 'vocabulary' }>;
 import { radius, spacing } from '../../theme';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { RootStackParamList } from '../../navigation/types';
 import { getKanjiIdByCharacter } from '../../services/kanjiService';
 
 interface FlashCardProps {
-  card: StudyCard;
+  card: KanjiStudyCard;
   isFlipped: boolean;
   onFlip: () => void;
   mode?: 'study' | 'preview';

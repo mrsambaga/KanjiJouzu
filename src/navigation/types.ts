@@ -1,5 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { CardPreviewParams, JlptLevel } from '../types';
+import type { CardPreviewParams, JlptLevel, LevelContentType, MaterialPreviewParams } from '../types';
 
 export type TabParamList = {
   Home: undefined;
@@ -14,6 +14,8 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<TabParamList>;
   Study: undefined;
   LevelDetail: { level: JlptLevel };
+  MaterialLevelDetail: { level: JlptLevel; contentType: Exclude<LevelContentType, 'kanji'> };
+  MaterialPreview: MaterialPreviewParams;
   CardPreview: CardPreviewParams;
   KanjiVocabulary: { kanjiId: number };
   DeckDetail: { deckId: number };

@@ -6,6 +6,8 @@ import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { StudyScreen } from '../screens/StudyScreen';
 import { LevelDetailScreen } from '../screens/LevelDetailScreen';
 import { CardPreviewScreen } from '../screens/CardPreviewScreen';
+import { MaterialLevelDetailScreen } from '../screens/MaterialLevelDetailScreen';
+import { MaterialPreviewScreen } from '../screens/MaterialPreviewScreen';
 import { KanjiVocabularyScreen } from '../screens/KanjiVocabularyScreen';
 import { DeckDetailScreen } from '../screens/DeckDetailScreen';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -48,7 +50,22 @@ export function RootNavigator() {
       <Stack.Screen
         name="LevelDetail"
         component={LevelDetailScreen}
-        options={({ route }) => ({ title: `JLPT ${route.params.level}` })}
+        options={({ route }) => ({ title: `JLPT ${route.params.level} Kanji` })}
+      />
+      <Stack.Screen
+        name="MaterialLevelDetail"
+        component={MaterialLevelDetailScreen}
+        options={({ route }) => ({
+          title:
+            route.params.contentType === 'vocabulary'
+              ? `JLPT ${route.params.level} Vocabulary`
+              : `JLPT ${route.params.level} Grammar`,
+        })}
+      />
+      <Stack.Screen
+        name="MaterialPreview"
+        component={MaterialPreviewScreen}
+        options={{ title: 'Preview', presentation: 'modal' }}
       />
       <Stack.Screen
         name="CardPreview"

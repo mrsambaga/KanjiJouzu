@@ -61,9 +61,82 @@ export interface DeckStats {
   progressPercent: number;
 }
 
+export type LevelContentType = 'kanji' | 'vocabulary' | 'grammar';
+
+export type PartOfSpeech =
+  | 'noun'
+  | 'verb'
+  | 'adj-i'
+  | 'adj-na'
+  | 'adv'
+  | 'expression'
+  | 'particle'
+  | 'other';
+
+export type GrammarCategory = PartOfSpeech;
+
+export interface MainVocabularySeed {
+  word: string;
+  reading: string;
+  romaji: string;
+  meaning: string;
+  partOfSpeech: PartOfSpeech;
+  example: string;
+  exampleMeaning: string;
+}
+
+export interface MainVocabulary {
+  id: number;
+  jlptLevel: JlptLevel;
+  word: string;
+  reading: string;
+  romaji: string;
+  meaning: string;
+  partOfSpeech: PartOfSpeech;
+  example: string;
+  exampleMeaning: string;
+  sortOrder: number;
+}
+
+export interface MaterialProgress {
+  status: KanjiStatus;
+  reviewCount: number;
+  correctCount: number;
+  lastReviewedAt: string | null;
+}
+
+export interface MainVocabularyWithProgress extends MainVocabulary {
+  progress?: MaterialProgress;
+}
+
+export interface GrammarSeed {
+  pattern: string;
+  summary: string;
+  category: GrammarCategory;
+  example: string;
+  exampleMeaning: string;
+}
+
+export interface Grammar {
+  id: number;
+  jlptLevel: JlptLevel;
+  pattern: string;
+  summary: string;
+  category: GrammarCategory;
+  example: string;
+  exampleMeaning: string;
+  sortOrder: number;
+}
+
+export interface GrammarWithProgress extends Grammar {
+  progress?: MaterialProgress;
+}
+
 export type StudySource =
   | { type: 'jlpt'; level: JlptLevel }
   | { type: 'jlpt-difficult'; level: JlptLevel }
+  | { type: 'jlpt-vocab'; level: JlptLevel }
+  | { type: 'jlpt-grammar'; level: JlptLevel }
   | { type: 'custom'; deckId: number }
   | { type: 'difficult' }
   | { type: 'continue' };
@@ -71,6 +144,10 @@ export type StudySource =
 export type CardPreviewParams =
   | { type: 'kanji'; kanjiId: number }
   | { type: 'vocabulary'; kanjiId: number; vocabularyId: number };
+
+export type MaterialPreviewParams =
+  | { type: 'main-vocabulary'; id: number }
+  | { type: 'grammar'; id: number };
 
 export interface KanjiWithProgress extends Kanji {
   progress?: KanjiProgress;
@@ -90,4 +167,8 @@ export type VocabularySeed = Pick<Vocabulary, 'word' | 'reading' | 'romaji' | 'm
 
 export type StudyCard =
   | { type: 'kanji'; kanji: KanjiWithProgress }
-  | { type: 'vocabulary'; kanji: KanjiWithProgress; vocabulary: Vocabulary };
+  | { type: 'vocabulary'; kanji: KanjiWithProgress; vocabulary: Vocabulary }
+  | { type: 'main-vocabulary'; item: MainVocabularyWithProgress }
+  | { type: 'grammar'; item: GrammarWithProgress };
+
+export type ReviewCard = Extract<StudyCard, { type: 'main-vocabulary' } | { type: 'grammar' }>;

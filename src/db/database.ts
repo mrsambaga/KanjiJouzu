@@ -2,7 +2,11 @@ import * as SQLite from 'expo-sqlite';
 import { N4_KANJI, N5_KANJI } from '../data/seedKanji';
 import { N4_VOCABULARY_BY_CHARACTER } from '../data/n4Vocabulary';
 import { N5_VOCABULARY_BY_CHARACTER } from '../data/n5Vocabulary';
-import { AppSettings } from '../types';
+import { N4_GRAMMAR } from '../data/n4Grammar';
+import { N5_GRAMMAR } from '../data/n5Grammar';
+import { N4_MAIN_VOCABULARY } from '../data/n4MainVocabulary';
+import { N5_MAIN_VOCABULARY } from '../data/n5MainVocabulary';
+import { AppSettings, JlptLevel } from '../types';
 import { kanaToRomaji } from '../utils/kanaToRomaji';
 
 const DB_NAME = 'kanji-jouzu.db';
@@ -10,6 +14,7 @@ const DB_NAME = 'kanji-jouzu.db';
 let db: SQLite.SQLiteDatabase | null = null;
 let initPromise: Promise<void> | null = null;
 let vocabularySeedPromise: Promise<void> | null = null;
+let materialSeedPromise: Promise<void> | null = null;
 
 const SCHEMA = `
   PRAGMA foreign_keys = ON;
@@ -84,6 +89,48 @@ const SCHEMA = `
 
   CREATE TABLE IF NOT EXISTS vocabulary_progress (
     vocabulary_id INTEGER PRIMARY KEY REFERENCES vocabulary(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'new',
+    review_count INTEGER NOT NULL DEFAULT 0,
+    correct_count INTEGER NOT NULL DEFAULT 0,
+    last_reviewed_at TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS main_vocabulary (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    jlpt_level TEXT NOT NULL,
+    word TEXT NOT NULL,
+    reading TEXT NOT NULL,
+    romaji TEXT NOT NULL DEFAULT '',
+    meaning TEXT NOT NULL,
+    part_of_speech TEXT NOT NULL,
+    example TEXT NOT NULL,
+    example_meaning TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (jlpt_level, word, reading)
+  );
+
+  CREATE TABLE IF NOT EXISTS main_vocabulary_progress (
+    main_vocabulary_id INTEGER PRIMARY KEY REFERENCES main_vocabulary(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'new',
+    review_count INTEGER NOT NULL DEFAULT 0,
+    correct_count INTEGER NOT NULL DEFAULT 0,
+    last_reviewed_at TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS grammar (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    jlpt_level TEXT NOT NULL,
+    pattern TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    category TEXT NOT NULL,
+    example TEXT NOT NULL,
+    example_meaning TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (jlpt_level, pattern)
+  );
+
+  CREATE TABLE IF NOT EXISTS grammar_progress (
+    grammar_id INTEGER PRIMARY KEY REFERENCES grammar(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'new',
     review_count INTEGER NOT NULL DEFAULT 0,
     correct_count INTEGER NOT NULL DEFAULT 0,
@@ -255,6 +302,84 @@ function startVocabularySeedInBackground(): void {
     .then(() => undefined);
 }
 
+async function seedMainVocabularyLevel(
+  database: SQLite.SQLiteDatabase,
+  level: JlptLevel,
+  entries: typeof N5_MAIN_VOCABULARY,
+): Promise<void> {
+  const row = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) AS count FROM main_vocabulary WHERE jlpt_level = ?',
+    level,
+  );
+  if ((row?.count ?? 0) > 0) return;
+
+  let sortOrder = 0;
+  for (const entry of entries) {
+    await database.runAsync(
+      `INSERT INTO main_vocabulary
+       (jlpt_level, word, reading, romaji, meaning, part_of_speech, example, example_meaning, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      level,
+      entry.word,
+      entry.reading,
+      entry.romaji,
+      entry.meaning,
+      entry.partOfSpeech,
+      entry.example,
+      entry.exampleMeaning,
+      sortOrder,
+    );
+    sortOrder += 1;
+  }
+}
+
+async function seedGrammarLevel(
+  database: SQLite.SQLiteDatabase,
+  level: JlptLevel,
+  entries: typeof N5_GRAMMAR,
+): Promise<void> {
+  const row = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) AS count FROM grammar WHERE jlpt_level = ?',
+    level,
+  );
+  if ((row?.count ?? 0) > 0) return;
+
+  let sortOrder = 0;
+  for (const entry of entries) {
+    await database.runAsync(
+      `INSERT INTO grammar
+       (jlpt_level, pattern, summary, category, example, example_meaning, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      level,
+      entry.pattern,
+      entry.summary,
+      entry.category,
+      entry.example,
+      entry.exampleMeaning,
+      sortOrder,
+    );
+    sortOrder += 1;
+  }
+}
+
+async function seedStudyMaterials(database: SQLite.SQLiteDatabase): Promise<void> {
+  await seedMainVocabularyLevel(database, 'N5', N5_MAIN_VOCABULARY);
+  await seedMainVocabularyLevel(database, 'N4', N4_MAIN_VOCABULARY);
+  await seedGrammarLevel(database, 'N5', N5_GRAMMAR);
+  await seedGrammarLevel(database, 'N4', N4_GRAMMAR);
+}
+
+function startMaterialSeedInBackground(): void {
+  if (!db || materialSeedPromise) return;
+
+  materialSeedPromise = seedStudyMaterials(db)
+    .catch((error) => {
+      console.warn('Background material seed failed:', error);
+      materialSeedPromise = null;
+    })
+    .then(() => undefined);
+}
+
 async function seedSettings(database: SQLite.SQLiteDatabase): Promise<void> {
   const row = await database.getFirstAsync<{ count: number }>(
     'SELECT COUNT(*) AS count FROM settings',
@@ -281,6 +406,7 @@ export async function initDatabase(): Promise<void> {
     await migrateVocabularyRomaji(db);
     await seedSettings(db);
     startVocabularySeedInBackground();
+    startMaterialSeedInBackground();
   })();
 
   return initPromise;
@@ -291,6 +417,14 @@ export async function ensureVocabularySeeded(): Promise<void> {
   await initDatabase();
   if (vocabularySeedPromise) {
     await vocabularySeedPromise;
+  }
+}
+
+/** Wait for main vocabulary + grammar seed. */
+export async function ensureMaterialSeeded(): Promise<void> {
+  await initDatabase();
+  if (materialSeedPromise) {
+    await materialSeedPromise;
   }
 }
 

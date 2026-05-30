@@ -4,7 +4,7 @@ export { lightColors, darkColors, spacing, radius, fontScale };
 export type { ThemeColors };
 
 export function getTheme(isDark: boolean): ThemeColors {
-  return isDark ? darkColors : lightColors;
+  return (isDark ? darkColors : lightColors) as ThemeColors;
 }
 
 export const typography = {
