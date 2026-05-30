@@ -22,6 +22,7 @@ export function ProgressRing({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - clamped);
   const center = size / 2;
+  const percentFontSize = Math.max(11, Math.round(size * 0.22));
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
@@ -52,7 +53,7 @@ export function ProgressRing({
         {label !== undefined ? (
           <Text style={[styles.label, { color: colors.onSurface }]}>{label}</Text>
         ) : (
-          <Text style={[styles.percent, { color: colors.primary }]}>
+          <Text style={[styles.percent, { color: colors.primary, fontSize: percentFontSize }]}>
             {Math.round(clamped * 100)}%
           </Text>
         )}
@@ -77,6 +78,6 @@ const styles = StyleSheet.create({
   },
   percent: {
     fontFamily: 'BeVietnamPro_700Bold',
-    fontSize: 18,
+    textAlign: 'center',
   },
 });

@@ -27,17 +27,12 @@ import {
 } from '../services/materialService';
 import { prepareStudySession } from '../services/studyService';
 import { useStudyStore } from '../stores/studyStore';
-import { DeckStats, GrammarWithProgress, JlptLevel, LevelContentType, MainVocabularyWithProgress } from '../types';
+import { DeckStats, GrammarWithProgress, MainVocabularyWithProgress } from '../types';
 import { RootStackParamList } from '../navigation/types';
 import { spacing, radius } from '../theme';
 
 type Route = RouteProp<RootStackParamList, 'MaterialLevelDetail'>;
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-
-function contentTitle(level: JlptLevel, contentType: LevelContentType): string {
-  if (contentType === 'vocabulary') return `JLPT ${level} Vocabulary`;
-  return `JLPT ${level} Grammar`;
-}
 
 export function MaterialLevelDetailScreen() {
   const { colors, typography } = useTheme();
@@ -121,13 +116,15 @@ export function MaterialLevelDetailScreen() {
         {stats && (
           <Card style={styles.progressCard}>
             <View style={styles.progressHeader}>
-              <View>
+              <View style={styles.progressTitle}>
                 <Tag label={level} variant="primary" />
                 <Text style={[typography.headlineLg, { color: colors.onSurface, marginTop: spacing.sm }]}>
-                  {contentTitle(level, contentType)}
+                  Grammar
                 </Text>
               </View>
-              <ProgressRing progress={stats.progressPercent / 100} size={72} strokeWidth={6} />
+              <View style={styles.progressRing}>
+                <ProgressRing progress={stats.progressPercent / 100} size={72} strokeWidth={6} />
+              </View>
             </View>
             <Text style={[styles.progressMeta, { color: colors.onSurfaceVariant }]}>
               {stats.studied} studied · {stats.total} total · {stats.progressPercent}%
@@ -206,6 +203,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
+  },
+  progressTitle: {
+    flex: 1,
+    minWidth: 0,
+  },
+  progressRing: {
+    flexShrink: 0,
   },
   progressMeta: {
     fontFamily: 'Inter_400Regular',

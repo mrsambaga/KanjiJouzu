@@ -11,7 +11,7 @@ import { useTheme } from '../context/ThemeContext';
 import { ensureMaterialSeeded } from '../db/database';
 import { getDeckStats } from '../services/progressService';
 import { getCustomDecks } from '../services/deckService';
-import { getGrammarStats, getMainVocabularyStats } from '../services/materialService';
+import { getGrammarStats } from '../services/materialService';
 import { DeckStats, CustomDeck, JlptLevel } from '../types';
 import { RootStackParamList } from '../navigation/types';
 import { spacing, radius } from '../theme';
@@ -35,7 +35,9 @@ function MaterialCard({ level, label, stats, onPress }: MaterialCardProps) {
           <Tag label={level} variant="primary" />
           <Text style={[styles.materialLabel, { color: colors.onSurface }]}>{label}</Text>
         </View>
-        <ProgressRing progress={stats.progressPercent / 100} size={48} strokeWidth={4} />
+        <View style={styles.progressRing}>
+          <ProgressRing progress={stats.progressPercent / 100} size={48} strokeWidth={4} />
+        </View>
       </View>
       <Text style={[styles.materialMeta, { color: colors.onSurfaceVariant }]}>
         {stats.studied} studied · {stats.total} total
@@ -50,8 +52,6 @@ export function CategoriesScreen() {
 
   const [n5Kanji, setN5Kanji] = useState<DeckStats | null>(null);
   const [n4Kanji, setN4Kanji] = useState<DeckStats | null>(null);
-  const [n5Vocab, setN5Vocab] = useState<DeckStats | null>(null);
-  const [n4Vocab, setN4Vocab] = useState<DeckStats | null>(null);
   const [n5Grammar, setN5Grammar] = useState<DeckStats | null>(null);
   const [n4Grammar, setN4Grammar] = useState<DeckStats | null>(null);
   const [decks, setDecks] = useState<CustomDeck[]>([]);
@@ -59,19 +59,15 @@ export function CategoriesScreen() {
 
   const loadData = useCallback(async () => {
     await ensureMaterialSeeded();
-    const [n5k, n4k, n5v, n4v, n5g, n4g, customDecks] = await Promise.all([
+    const [n5k, n4k, n5g, n4g, customDecks] = await Promise.all([
       getDeckStats({ type: 'jlpt', level: 'N5' }),
       getDeckStats({ type: 'jlpt', level: 'N4' }),
-      getMainVocabularyStats('N5'),
-      getMainVocabularyStats('N4'),
       getGrammarStats('N5'),
       getGrammarStats('N4'),
       getCustomDecks(),
     ]);
     setN5Kanji(n5k);
     setN4Kanji(n4k);
-    setN5Vocab(n5v);
-    setN4Vocab(n4v);
     setN5Grammar(n5g);
     setN4Grammar(n4g);
     setDecks(customDecks);
@@ -97,7 +93,7 @@ export function CategoriesScreen() {
       >
         <Text style={[typography.headlineLg, { color: colors.onBackground }]}>Levels</Text>
         <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
-          Kanji, vocabulary, and grammar by JLPT level
+          Kanji and grammar by JLPT level
         </Text>
 
         <Text style={[styles.groupTitle, { color: colors.onSurface }]}>N5</Text>
@@ -107,16 +103,6 @@ export function CategoriesScreen() {
             label="Kanji"
             stats={n5Kanji}
             onPress={() => navigation.navigate('LevelDetail', { level: 'N5' })}
-          />
-        )}
-        {n5Vocab && (
-          <MaterialCard
-            level="N5"
-            label="Vocabulary"
-            stats={n5Vocab}
-            onPress={() =>
-              navigation.navigate('MaterialLevelDetail', { level: 'N5', contentType: 'vocabulary' })
-            }
           />
         )}
         {n5Grammar && (
@@ -137,16 +123,6 @@ export function CategoriesScreen() {
             label="Kanji"
             stats={n4Kanji}
             onPress={() => navigation.navigate('LevelDetail', { level: 'N4' })}
-          />
-        )}
-        {n4Vocab && (
-          <MaterialCard
-            level="N4"
-            label="Vocabulary"
-            stats={n4Vocab}
-            onPress={() =>
-              navigation.navigate('MaterialLevelDetail', { level: 'N4', contentType: 'vocabulary' })
-            }
           />
         )}
         {n4Grammar && (
@@ -233,8 +209,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
   },
-  materialTags: { gap: spacing.xs },
+  materialTags: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.xs,
+  },
+  progressRing: {
+    flexShrink: 0,
+  },
   materialLabel: {
     fontFamily: 'BeVietnamPro_700Bold',
     fontSize: 20,
