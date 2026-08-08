@@ -8,14 +8,13 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
-  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Tag } from '../components/ui/Tag';
 import { Button } from '../components/ui/Button';
 import { useTheme } from '../context/ThemeContext';
@@ -137,8 +136,8 @@ export function DeckDetailScreen() {
       } else {
         Alert.alert('Import Complete', `Successfully imported ${imported} card${imported !== 1 ? 's' : ''}.`);
       }
-    } catch {
-      Alert.alert('Error', 'Could not read the file. Please try a valid CSV file.');
+    } catch (exception) {
+      Alert.alert('Error', 'Could not read the file. ' + String(exception));
     } finally {
       setImporting(false);
     }
@@ -608,4 +607,4 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
   },
-});
+})
