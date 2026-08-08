@@ -18,6 +18,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { Tag } from '../components/ui/Tag';
 import { Button } from '../components/ui/Button';
 import { useTheme } from '../context/ThemeContext';
+import { prepareStudySession } from '../services/studyService';
+import { useStudyStore } from '../stores/studyStore';
 import { addKanjiToDeck, getCustomDeck, removeKanjiFromDeck } from '../services/deckService';
 import { searchKanji, getKanjiByIds } from '../services/kanjiService';
 import {
@@ -49,6 +51,8 @@ export function DeckDetailScreen() {
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
+  const [startingStudy, setStartingStudy] = useState(false);
+  const startSession = useStudyStore((s) => s.startSession);
 
   const loadDeck = useCallback(async () => {
     setLoading(true);
@@ -109,6 +113,22 @@ export function DeckDetailScreen() {
     ]);
   };
 
+  const handleStudy = async () => {
+    setStartingStudy(true);
+    try {
+      const source = { type: 'custom' as const, deckId };
+      const session = await prepareStudySession(source);
+      if (!session) {
+        Alert.alert('Nothing to study', 'Add some cards or kanji to this deck first.');
+        return;
+      }
+      startSession(source, session.queue, session.startIndex);
+      navigation.navigate('Study');
+    } finally {
+      setStartingStudy(false);
+    }
+  };
+
   const handleImportCSV = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -153,6 +173,17 @@ export function DeckDetailScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
+      {/* Study button */}
+      <View style={[styles.studyBar, { borderBottomColor: colors.outlineVariant }]}>
+        <Button
+          title="Study Deck"
+          onPress={handleStudy}
+          loading={startingStudy}
+          disabled={startingStudy || (customCards.length === 0 && kanji.length === 0)}
+          fullWidth
+        />
+      </View>
+
       {/* Tab bar */}
       <View style={[styles.tabBar, { borderBottomColor: colors.outlineVariant }]}>
         <Pressable
@@ -445,6 +476,12 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  studyBar: {
+    padding: spacing.containerPadding,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+  },
 
   // Tabs
   tabBar: {

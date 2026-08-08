@@ -2,7 +2,6 @@ import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Button } from '../ui/Button';
-import { Tag } from '../ui/Tag';
 import { useTheme } from '../../context/ThemeContext';
 import { CustomCardWithProgress } from '../../types';
 import { radius, spacing } from '../../theme';
@@ -25,7 +24,6 @@ export function CustomFlashCard({ card, isFlipped, onFlip }: CustomFlashCardProp
       exiting={FadeOut.duration(150)}
       style={styles.face}
     >
-      <Tag label={card.cardType === 'kanji' ? 'Kanji' : 'Vocabulary'} variant="primary" />
       <Text style={[styles.front, { color: colors.onSurface }]}>{card.front}</Text>
       {card.reading ? (
         <Text style={[styles.reading, { color: colors.primary }]}>{card.reading}</Text>
