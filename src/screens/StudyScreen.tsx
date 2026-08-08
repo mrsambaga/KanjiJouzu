@@ -13,6 +13,7 @@ import {
   recordGrammarReview,
   recordMainVocabularyReview,
 } from '../services/materialProgressService';
+import { recordCustomCardReview } from '../services/customCardService';
 import { RootStackParamList } from '../navigation/types';
 import { spacing } from '../theme';
 
@@ -63,6 +64,8 @@ export function StudyScreen() {
           current.item.id,
           remembered ? 'remembered' : 'difficult',
         );
+      } else if (current.type === 'custom-card') {
+        await recordCustomCardReview(current.card.id, remembered ? 'remembered' : 'difficult');
       } else {
         await recordGrammarReview(current.item.id, remembered ? 'remembered' : 'difficult');
       }
@@ -127,7 +130,9 @@ export function StudyScreen() {
                   ? `v-${current.vocabulary.id}`
                   : current.type === 'main-vocabulary'
                     ? `mv-${current.item.id}`
-                    : `g-${current.item.id}`
+                    : current.type === 'custom-card'
+                      ? `cc-${current.card.id}`
+                      : `g-${current.item.id}`
             }
             card={current}
             isFlipped={showAnswer}

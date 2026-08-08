@@ -20,12 +20,22 @@ async function getKanjiIdsForDeck(deckId: number): Promise<number[]> {
   return rows.map((row) => row.kanji_id);
 }
 
-function mapDeckRow(row: DeckRow, kanjiIds: number[]): CustomDeck {
+async function getCustomCardCountForDeck(deckId: number): Promise<number> {
+  const db = getDatabase();
+  const row = await db.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) AS count FROM custom_cards WHERE deck_id = ?',
+    deckId,
+  );
+  return row?.count ?? 0;
+}
+
+function mapDeckRow(row: DeckRow, kanjiIds: number[], customCardCount = 0): CustomDeck {
   return {
     id: row.id,
     name: row.name,
     createdAt: row.created_at,
     kanjiIds,
+    customCardCount,
   };
 }
 
@@ -38,7 +48,8 @@ export async function getCustomDecks(): Promise<CustomDeck[]> {
   const decks: CustomDeck[] = [];
   for (const row of rows) {
     const kanjiIds = await getKanjiIdsForDeck(row.id);
-    decks.push(mapDeckRow(row, kanjiIds));
+    const customCardCount = await getCustomCardCountForDeck(row.id);
+    decks.push(mapDeckRow(row, kanjiIds, customCardCount));
   }
   return decks;
 }
@@ -52,7 +63,8 @@ export async function getCustomDeck(deckId: number): Promise<CustomDeck | null> 
   if (!row) return null;
 
   const kanjiIds = await getKanjiIdsForDeck(deckId);
-  return mapDeckRow(row, kanjiIds);
+  const customCardCount = await getCustomCardCountForDeck(deckId);
+  return mapDeckRow(row, kanjiIds, customCardCount);
 }
 
 export async function createCustomDeck(name: string, kanjiIds: number[] = []): Promise<CustomDeck> {
@@ -79,6 +91,7 @@ export async function createCustomDeck(name: string, kanjiIds: number[] = []): P
     name: name.trim(),
     createdAt,
     kanjiIds: [...new Set(kanjiIds)],
+    customCardCount: 0,
   };
 }
 

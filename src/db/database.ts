@@ -136,6 +136,27 @@ const SCHEMA = `
     correct_count INTEGER NOT NULL DEFAULT 0,
     last_reviewed_at TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS custom_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    deck_id INTEGER NOT NULL REFERENCES custom_decks(id) ON DELETE CASCADE,
+    card_type TEXT NOT NULL DEFAULT 'vocabulary',
+    front TEXT NOT NULL,
+    reading TEXT NOT NULL DEFAULT '',
+    romaji TEXT NOT NULL DEFAULT '',
+    meaning TEXT NOT NULL,
+    example TEXT NOT NULL DEFAULT '',
+    example_meaning TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS custom_card_progress (
+    custom_card_id INTEGER PRIMARY KEY REFERENCES custom_cards(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'new',
+    review_count INTEGER NOT NULL DEFAULT 0,
+    correct_count INTEGER NOT NULL DEFAULT 0,
+    last_reviewed_at TEXT
+  );
 `;
 
 const DEFAULT_SETTINGS: AppSettings = {

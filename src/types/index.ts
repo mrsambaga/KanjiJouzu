@@ -28,6 +28,34 @@ export interface CustomDeck {
   name: string;
   createdAt: string;
   kanjiIds: number[];
+  customCardCount: number;
+}
+
+export type CustomCardType = 'kanji' | 'vocabulary';
+
+export interface CustomCard {
+  id: number;
+  deckId: number;
+  cardType: CustomCardType;
+  front: string;       // Japanese word/kanji shown on front
+  reading: string;     // Hiragana/katakana reading
+  romaji: string;
+  meaning: string;     // English meaning (back of card)
+  example: string;
+  exampleMeaning: string;
+  createdAt: string;
+}
+
+export interface CustomCardProgress {
+  customCardId: number;
+  status: KanjiStatus;
+  reviewCount: number;
+  correctCount: number;
+  lastReviewedAt: string | null;
+}
+
+export interface CustomCardWithProgress extends CustomCard {
+  progress?: CustomCardProgress;
 }
 
 export interface StudySession {
@@ -169,6 +197,7 @@ export type StudyCard =
   | { type: 'kanji'; kanji: KanjiWithProgress }
   | { type: 'vocabulary'; kanji: KanjiWithProgress; vocabulary: Vocabulary }
   | { type: 'main-vocabulary'; item: MainVocabularyWithProgress }
-  | { type: 'grammar'; item: GrammarWithProgress };
+  | { type: 'grammar'; item: GrammarWithProgress }
+  | { type: 'custom-card'; card: CustomCardWithProgress };
 
 export type ReviewCard = Extract<StudyCard, { type: 'main-vocabulary' } | { type: 'grammar' }>;

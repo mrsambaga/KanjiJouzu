@@ -10,6 +10,7 @@ import { MaterialLevelDetailScreen } from '../screens/MaterialLevelDetailScreen'
 import { MaterialPreviewScreen } from '../screens/MaterialPreviewScreen';
 import { KanjiVocabularyScreen } from '../screens/KanjiVocabularyScreen';
 import { DeckDetailScreen } from '../screens/DeckDetailScreen';
+import { CustomCardEditorScreen } from '../screens/CustomCardEditorScreen';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useTheme } from '../context/ThemeContext';
 
@@ -81,6 +82,13 @@ export function RootNavigator() {
         name="DeckDetail"
         component={DeckDetailScreen}
         options={{ title: 'Deck Details' }}
+      />
+      <Stack.Screen
+        name="CustomCardEditor"
+        component={CustomCardEditorScreen}
+        options={({ route }) => ({
+          title: route.params.card ? 'Edit Card' : 'New Card',
+        })}
       />
     </Stack.Navigator>
   );

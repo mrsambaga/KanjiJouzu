@@ -140,7 +140,8 @@ function DeckListItem({
       <View style={styles.deckContent}>
         <Text style={[styles.deckName, { color: colors.onSurface }]}>{deck.name}</Text>
         <View style={styles.deckMeta}>
-          <Tag label={`${deck.kanjiIds.length} kanji`} />
+          {deck.kanjiIds.length > 0 && <Tag label={`${deck.kanjiIds.length} kanji`} />}
+          {deck.customCardCount > 0 && <Tag label={`${deck.customCardCount} cards`} />}
           <Tag label={`${progress}%`} variant="primary" />
         </View>
       </View>

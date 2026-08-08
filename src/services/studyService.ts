@@ -1,4 +1,5 @@
 import { getCustomDeck } from './deckService';
+import { getCustomCardsForDeck } from './customCardService';
 import {
   getDifficultKanji,
   getDifficultVocabulary,
@@ -230,6 +231,33 @@ export async function prepareStudySession(
     let startIndex = 0;
     const savedIndex = await getStudyPosition(source);
     startIndex = Math.min(Math.max(0, savedIndex), Math.max(0, queue.length - 1));
+    return { queue, startIndex };
+  }
+
+  if (source.type === 'custom') {
+    const deck = await getCustomDeck(source.deckId);
+    if (!deck) return null;
+
+    await ensureVocabularySeeded();
+    const queue: StudyCard[] = [];
+
+    // Standard kanji cards
+    if (deck.kanjiIds.length > 0) {
+      const kanjiList = await getKanjiWithProgress(deck.kanjiIds);
+      const kanjiCards = await expandQueueWithVocabulary(kanjiList);
+      queue.push(...kanjiCards);
+    }
+
+    // Custom cards
+    const customCards = await getCustomCardsForDeck(source.deckId);
+    for (const card of customCards) {
+      queue.push({ type: 'custom-card', card });
+    }
+
+    if (queue.length === 0) return null;
+
+    const savedIndex = await getStudyPosition(source);
+    const startIndex = Math.min(Math.max(0, savedIndex), Math.max(0, queue.length - 1));
     return { queue, startIndex };
   }
 

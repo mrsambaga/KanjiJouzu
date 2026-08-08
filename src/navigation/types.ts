@@ -1,5 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { CardPreviewParams, JlptLevel, LevelContentType, MaterialPreviewParams } from '../types';
+import type { CardPreviewParams, CustomCard, JlptLevel, LevelContentType, MaterialPreviewParams } from '../types';
 
 export type TabParamList = {
   Home: undefined;
@@ -19,6 +19,7 @@ export type RootStackParamList = {
   CardPreview: CardPreviewParams;
   KanjiVocabulary: { kanjiId: number };
   DeckDetail: { deckId: number };
+  CustomCardEditor: { deckId: number; card?: CustomCard };
 };
 
 declare global {

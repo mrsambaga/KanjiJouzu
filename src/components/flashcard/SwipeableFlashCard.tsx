@@ -12,6 +12,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { FlashCard } from './FlashCard';
 import { ReviewFlashCard } from './ReviewFlashCard';
+import { CustomFlashCard } from './CustomFlashCard';
 import { StudyCard } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { spacing } from '../../theme';
@@ -111,6 +112,8 @@ export function SwipeableFlashCard({
         <Animated.View style={[styles.cardWrapper, cardStyle]}>
           {card.type === 'main-vocabulary' || card.type === 'grammar' ? (
             <ReviewFlashCard card={card} isFlipped={isFlipped} onFlip={onFlip} />
+          ) : card.type === 'custom-card' ? (
+            <CustomFlashCard card={card.card} isFlipped={isFlipped} onFlip={onFlip} />
           ) : (
             <FlashCard
               card={card as Extract<StudyCard, { type: 'kanji' } | { type: 'vocabulary' }>}
