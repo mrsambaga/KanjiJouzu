@@ -16,6 +16,7 @@ interface CustomFlashCardProps {
 export function CustomFlashCard({ card, isFlipped, onFlip }: CustomFlashCardProps) {
   const { colors } = useTheme();
   const showRomaji = useSettingsStore((s) => s.showRomaji);
+  const showFurigana = useSettingsStore((s) => s.showFurigana);
 
   const face = !isFlipped ? (
     <Animated.View
@@ -25,7 +26,7 @@ export function CustomFlashCard({ card, isFlipped, onFlip }: CustomFlashCardProp
       style={styles.face}
     >
       <Text selectable style={[styles.front, { color: colors.onSurface }]}>{card.front}</Text>
-      {card.reading ? (
+      {showFurigana && card.reading ? (
         <Text selectable style={[styles.reading, { color: colors.primary }]}>{card.reading}</Text>
       ) : null}
       {showRomaji && card.romaji ? (

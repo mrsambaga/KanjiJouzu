@@ -42,6 +42,7 @@ function isKanjiChar(ch: string): boolean {
 export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCardProps) {
   const { colors, typography, fontScale, scaledFontSize } = useTheme();
   const showRomaji = useSettingsStore((s) => s.showRomaji);
+  const showFurigana = useSettingsStore((s) => s.showFurigana);
   const navigation = useNavigation<Nav>();
   const kanjiSize = scaledFontSize(typography.displayKanji.fontSize, fontScale);
   const isPreview = mode === 'preview';
@@ -149,7 +150,9 @@ export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCard
         style={styles.face}
       >
         <Text selectable style={[styles.meaning, { color: colors.onSurface }]}>{vocabulary.meaning}</Text>
-        <Text selectable style={[styles.reading, { color: colors.primary }]}>{vocabulary.reading}</Text>
+        {showFurigana ? (
+          <Text selectable style={[styles.reading, { color: colors.primary }]}>{vocabulary.reading}</Text>
+        ) : null}
         {showRomaji ? (
           <RomajiText romaji={vocabulary.romaji} style={romajiMutedStyle} />
         ) : null}
@@ -198,10 +201,10 @@ export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCard
     >
       <Text selectable style={[styles.meaning, { color: colors.onSurface }]}>{kanji.meaning}</Text>
       {showRomaji ? <RomajiText romaji={kanji.romaji} style={romajiStyle} /> : null}
-      {kanji.onyomi ? (
+      {showFurigana && kanji.onyomi ? (
         <Text selectable style={[styles.reading, { color: colors.onSurfaceVariant }]}>On: {kanji.onyomi}</Text>
       ) : null}
-      {kanji.kunyomi ? (
+      {showFurigana && kanji.kunyomi ? (
         <Text selectable style={[styles.reading, { color: colors.onSurfaceVariant }]}>Kun: {kanji.kunyomi}</Text>
       ) : null}
       {kanji.example ? (

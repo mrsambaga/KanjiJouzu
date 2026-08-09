@@ -18,6 +18,7 @@ interface ReviewFlashCardProps {
 export function ReviewFlashCard({ card, isFlipped, onFlip }: ReviewFlashCardProps) {
   const { colors, typography } = useTheme();
   const showRomaji = useSettingsStore((s) => s.showRomaji);
+  const showFurigana = useSettingsStore((s) => s.showFurigana);
 
   const face = !isFlipped ? (
     <Animated.View
@@ -38,7 +39,9 @@ export function ReviewFlashCard({ card, isFlipped, onFlip }: ReviewFlashCardProp
           >
             {card.item.word}
           </Text>
-          <Text selectable style={[styles.reading, { color: colors.primary }]}>{card.item.reading}</Text>
+          {showFurigana ? (
+            <Text selectable style={[styles.reading, { color: colors.primary }]}>{card.item.reading}</Text>
+          ) : null}
           {showRomaji ? (
             <Text selectable style={[styles.romaji, { color: colors.onSurfaceVariant }]}>
               {card.item.romaji}

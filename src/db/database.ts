@@ -162,15 +162,17 @@ const SCHEMA = `
 const DEFAULT_SETTINGS: AppSettings = {
   darkMode: false,
   showRomaji: true,
+  showFurigana: true,
   fontSize: 'medium',
   onboardingComplete: false,
 };
 
-type SettingKey = 'darkMode' | 'showRomaji' | 'fontSize' | 'onboardingComplete';
+type SettingKey = 'darkMode' | 'showRomaji' | 'showFurigana' | 'fontSize' | 'onboardingComplete';
 
 const SETTING_KEYS: SettingKey[] = [
   'darkMode',
   'showRomaji',
+  'showFurigana',
   'fontSize',
   'onboardingComplete',
 ];
@@ -416,6 +418,23 @@ async function seedSettings(database: SQLite.SQLiteDatabase): Promise<void> {
   }
 }
 
+/** Insert any settings keys that are missing (e.g. added in a later version). */
+async function migrateSettings(database: SQLite.SQLiteDatabase): Promise<void> {
+  for (const key of SETTING_KEYS) {
+    const existing = await database.getFirstAsync<{ value: string }>(
+      'SELECT value FROM settings WHERE key = ?',
+      key,
+    );
+    if (!existing) {
+      await database.runAsync(
+        'INSERT INTO settings (key, value) VALUES (?, ?)',
+        key,
+        JSON.stringify(DEFAULT_SETTINGS[key]),
+      );
+    }
+  }
+}
+
 export async function initDatabase(): Promise<void> {
   if (initPromise) return initPromise;
 
@@ -426,6 +445,7 @@ export async function initDatabase(): Promise<void> {
     await migrateMissingKanji(db);
     await migrateVocabularyRomaji(db);
     await seedSettings(db);
+    await migrateSettings(db);
     startVocabularySeedInBackground();
     startMaterialSeedInBackground();
   })();
@@ -496,6 +516,9 @@ export async function loadAllSettings(): Promise<AppSettings> {
         break;
       case 'showRomaji':
         settings.showRomaji = parsed as AppSettings['showRomaji'];
+        break;
+      case 'showFurigana':
+        settings.showFurigana = parsed as AppSettings['showFurigana'];
         break;
       case 'fontSize':
         settings.fontSize = parsed as AppSettings['fontSize'];

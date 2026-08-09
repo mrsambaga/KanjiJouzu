@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,7 +15,9 @@ import {
 } from '../services/materialProgressService';
 import { recordCustomCardReview } from '../services/customCardService';
 import { RootStackParamList } from '../navigation/types';
-import { spacing } from '../theme';
+import { spacing, radius } from '../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { useSettingsStore } from '../stores/settingsStore';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Study'>;
 
@@ -35,6 +37,12 @@ export function StudyScreen() {
   const navigateNext = useStudyStore((s) => s.navigateNext);
   const navigatePrevious = useStudyStore((s) => s.navigatePrevious);
   const endSession = useStudyStore((s) => s.endSession);
+
+  const showRomaji = useSettingsStore((s) => s.showRomaji);
+  const showFurigana = useSettingsStore((s) => s.showFurigana);
+  const setShowRomaji = useSettingsStore((s) => s.setShowRomaji);
+  const setShowFurigana = useSettingsStore((s) => s.setShowFurigana);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const current = queue[currentIndex];
   const deckProgress = queue.length > 0 ? (currentIndex + 1) / queue.length : 0;
@@ -114,11 +122,68 @@ export function StudyScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.counter, { color: colors.onSurfaceVariant }]}>
-          {currentIndex + 1} / {queue.length}
-        </Text>
+        <View style={styles.headerRow}>
+          <Text style={[styles.counter, { color: colors.onSurfaceVariant }]}>
+            {currentIndex + 1} / {queue.length}
+          </Text>
+          <Pressable onPress={() => setSettingsOpen(true)} hitSlop={12} style={styles.gearBtn}>
+            <Ionicons name="settings-outline" size={20} color={colors.onSurfaceVariant} />
+          </Pressable>
+        </View>
         <ProgressBar progress={deckProgress} height={6} />
       </View>
+
+      <Modal
+        visible={settingsOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSettingsOpen(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setSettingsOpen(false)}>
+          <Pressable
+            style={[styles.popover, { backgroundColor: colors.surfaceContainerLowest, borderColor: colors.outlineVariant }]}
+            onPress={() => {}}
+          >
+            <Text style={[styles.popoverTitle, { color: colors.onSurface }]}>Card Display</Text>
+
+            <Pressable style={styles.toggleRow} onPress={() => setShowFurigana(!showFurigana)}>
+              <View style={styles.toggleLabel}>
+                <Ionicons name="text-outline" size={18} color={colors.onSurfaceVariant} />
+                <Text style={[styles.toggleText, { color: colors.onSurface }]}>Show Furigana</Text>
+              </View>
+              <View style={[
+                styles.pill,
+                { backgroundColor: showFurigana ? colors.primary : colors.surfaceContainerHigh },
+              ]}>
+                <View style={[
+                  styles.pillThumb,
+                  { backgroundColor: colors.onPrimary },
+                  showFurigana ? styles.pillThumbOn : styles.pillThumbOff,
+                ]} />
+              </View>
+            </Pressable>
+
+            <View style={[styles.divider, { backgroundColor: colors.outlineVariant }]} />
+
+            <Pressable style={styles.toggleRow} onPress={() => setShowRomaji(!showRomaji)}>
+              <View style={styles.toggleLabel}>
+                <Ionicons name="language-outline" size={18} color={colors.onSurfaceVariant} />
+                <Text style={[styles.toggleText, { color: colors.onSurface }]}>Show Romaji</Text>
+              </View>
+              <View style={[
+                styles.pill,
+                { backgroundColor: showRomaji ? colors.primary : colors.surfaceContainerHigh },
+              ]}>
+                <View style={[
+                  styles.pillThumb,
+                  { backgroundColor: colors.onPrimary },
+                  showRomaji ? styles.pillThumbOn : styles.pillThumbOff,
+                ]} />
+              </View>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <View style={styles.cardArea}>
         {current && (
@@ -175,10 +240,83 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingTop: spacing.md,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   counter: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
     textAlign: 'center',
+    flex: 1,
+  },
+  gearBtn: {
+    position: 'absolute',
+    right: 0,
+  },
+  // Modal / popover
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 80,
+    paddingRight: spacing.containerPadding,
+  },
+  popover: {
+    width: 240,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    gap: spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  popoverTitle: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: 14,
+    marginBottom: spacing.xs,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.xs,
+  },
+  toggleLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  toggleText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 15,
+  },
+  divider: {
+    height: 1,
+    marginVertical: spacing.xs,
+  },
+  pill: {
+    width: 44,
+    height: 26,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  pillThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
+  pillThumbOn: {
+    alignSelf: 'flex-end',
+  },
+  pillThumbOff: {
+    alignSelf: 'flex-start',
   },
   cardArea: {
     flex: 1,

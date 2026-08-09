@@ -7,6 +7,7 @@ interface SettingsState extends AppSettings {
   hydrate: () => Promise<void>;
   setDarkMode: (darkMode: boolean) => Promise<void>;
   setShowRomaji: (showRomaji: boolean) => Promise<void>;
+  setShowFurigana: (showFurigana: boolean) => Promise<void>;
   setFontSize: (fontSize: AppSettings['fontSize']) => Promise<void>;
   setOnboardingComplete: (onboardingComplete: boolean) => Promise<void>;
 }
@@ -14,6 +15,7 @@ interface SettingsState extends AppSettings {
 export const useSettingsStore = create<SettingsState>((set) => ({
   darkMode: false,
   showRomaji: true,
+  showFurigana: true,
   fontSize: 'medium',
   onboardingComplete: false,
   hydrated: false,
@@ -32,6 +34,11 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setShowRomaji: async (showRomaji) => {
     await setSetting('showRomaji', showRomaji);
     set({ showRomaji });
+  },
+
+  setShowFurigana: async (showFurigana) => {
+    await setSetting('showFurigana', showFurigana);
+    set({ showFurigana });
   },
 
   setFontSize: async (fontSize) => {

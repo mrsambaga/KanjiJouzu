@@ -77,6 +77,7 @@ export interface DailyActivity {
 export interface AppSettings {
   darkMode: boolean;
   showRomaji: boolean;
+  showFurigana: boolean;
   fontSize: 'small' | 'medium' | 'large';
   onboardingComplete: boolean;
 }
