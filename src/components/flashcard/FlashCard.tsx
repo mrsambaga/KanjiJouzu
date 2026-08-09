@@ -31,7 +31,7 @@ function RomajiText({
 }) {
   const trimmed = romaji?.trim();
   if (!trimmed) return null;
-  return <Text style={style}>{trimmed}</Text>;
+  return <Text selectable style={style}>{trimmed}</Text>;
 }
 
 function isKanjiChar(ch: string): boolean {
@@ -117,6 +117,7 @@ export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCard
           Vocabulary · {card.kanji.character}
         </Text>
         <Text
+          selectable
           style={[
             styles.vocabWord,
             {
@@ -147,8 +148,8 @@ export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCard
         exiting={FadeOut.duration(150)}
         style={styles.face}
       >
-        <Text style={[styles.meaning, { color: colors.onSurface }]}>{vocabulary.meaning}</Text>
-        <Text style={[styles.reading, { color: colors.primary }]}>{vocabulary.reading}</Text>
+        <Text selectable style={[styles.meaning, { color: colors.onSurface }]}>{vocabulary.meaning}</Text>
+        <Text selectable style={[styles.reading, { color: colors.primary }]}>{vocabulary.reading}</Text>
         {showRomaji ? (
           <RomajiText romaji={vocabulary.romaji} style={romajiMutedStyle} />
         ) : null}
@@ -181,6 +182,7 @@ export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCard
             letterSpacing: typography.displayKanji.letterSpacing,
           },
         ]}
+        selectable
         onPress={() => openKanjiByCharacter(kanji.character)}
         suppressHighlighting
       >
@@ -194,19 +196,19 @@ export function FlashCard({ card, isFlipped, onFlip, mode = 'study' }: FlashCard
       exiting={FadeOut.duration(150)}
       style={styles.face}
     >
-      <Text style={[styles.meaning, { color: colors.onSurface }]}>{kanji.meaning}</Text>
+      <Text selectable style={[styles.meaning, { color: colors.onSurface }]}>{kanji.meaning}</Text>
       {showRomaji ? <RomajiText romaji={kanji.romaji} style={romajiStyle} /> : null}
       {kanji.onyomi ? (
-        <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>On: {kanji.onyomi}</Text>
+        <Text selectable style={[styles.reading, { color: colors.onSurfaceVariant }]}>On: {kanji.onyomi}</Text>
       ) : null}
       {kanji.kunyomi ? (
-        <Text style={[styles.reading, { color: colors.onSurfaceVariant }]}>Kun: {kanji.kunyomi}</Text>
+        <Text selectable style={[styles.reading, { color: colors.onSurfaceVariant }]}>Kun: {kanji.kunyomi}</Text>
       ) : null}
       {kanji.example ? (
         <View style={[styles.exampleBox, { backgroundColor: colors.surfaceContainer }]}>
-          <Text style={[styles.example, { color: colors.onSurface }]}>{kanji.example}</Text>
+          <Text selectable style={[styles.example, { color: colors.onSurface }]}>{kanji.example}</Text>
           {kanji.exampleMeaning ? (
-            <Text style={[styles.exampleMeaning, { color: colors.onSurfaceVariant }]}>
+            <Text selectable style={[styles.exampleMeaning, { color: colors.onSurfaceVariant }]}>
               {kanji.exampleMeaning}
             </Text>
           ) : null}

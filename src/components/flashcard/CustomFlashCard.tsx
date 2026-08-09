@@ -24,12 +24,12 @@ export function CustomFlashCard({ card, isFlipped, onFlip }: CustomFlashCardProp
       exiting={FadeOut.duration(150)}
       style={styles.face}
     >
-      <Text style={[styles.front, { color: colors.onSurface }]}>{card.front}</Text>
+      <Text selectable style={[styles.front, { color: colors.onSurface }]}>{card.front}</Text>
       {card.reading ? (
-        <Text style={[styles.reading, { color: colors.primary }]}>{card.reading}</Text>
+        <Text selectable style={[styles.reading, { color: colors.primary }]}>{card.reading}</Text>
       ) : null}
       {showRomaji && card.romaji ? (
-        <Text style={[styles.romaji, { color: colors.onSurfaceVariant }]}>{card.romaji}</Text>
+        <Text selectable style={[styles.romaji, { color: colors.onSurfaceVariant }]}>{card.romaji}</Text>
       ) : null}
     </Animated.View>
   ) : (
@@ -39,13 +39,13 @@ export function CustomFlashCard({ card, isFlipped, onFlip }: CustomFlashCardProp
       exiting={FadeOut.duration(150)}
       style={styles.face}
     >
-      <Text style={[styles.meaning, { color: colors.onSurface }]}>{card.meaning}</Text>
+      <Text selectable style={[styles.meaning, { color: colors.onSurface }]}>{card.meaning}</Text>
       {card.example ? (
         <View style={[styles.exampleBox, { backgroundColor: colors.surfaceContainer }]}>
           <Text style={[styles.exampleLabel, { color: colors.onSurfaceVariant }]}>Example</Text>
-          <Text style={[styles.example, { color: colors.onSurface }]}>{card.example}</Text>
+          <Text selectable style={[styles.example, { color: colors.onSurface }]}>{card.example}</Text>
           {card.exampleMeaning ? (
-            <Text style={[styles.exampleMeaning, { color: colors.primary }]}>
+            <Text selectable style={[styles.exampleMeaning, { color: colors.primary }]}>
               {card.exampleMeaning}
             </Text>
           ) : null}

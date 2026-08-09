@@ -30,6 +30,7 @@ export function ReviewFlashCard({ card, isFlipped, onFlip }: ReviewFlashCardProp
         <>
           <Tag label={partOfSpeechLabel(card.item.partOfSpeech)} variant="primary" />
           <Text
+            selectable
             style={[
               styles.word,
               { fontFamily: typography.displayKanji.fontFamily, color: colors.onSurface },
@@ -37,19 +38,19 @@ export function ReviewFlashCard({ card, isFlipped, onFlip }: ReviewFlashCardProp
           >
             {card.item.word}
           </Text>
-          <Text style={[styles.reading, { color: colors.primary }]}>{card.item.reading}</Text>
+          <Text selectable style={[styles.reading, { color: colors.primary }]}>{card.item.reading}</Text>
           {showRomaji ? (
-            <Text style={[styles.romaji, { color: colors.onSurfaceVariant }]}>
+            <Text selectable style={[styles.romaji, { color: colors.onSurfaceVariant }]}>
               {card.item.romaji}
             </Text>
           ) : null}
-          <Text style={[styles.summary, { color: colors.onSurface }]}>{card.item.meaning}</Text>
+          <Text selectable style={[styles.summary, { color: colors.onSurface }]}>{card.item.meaning}</Text>
         </>
       ) : (
         <>
           <Tag label={partOfSpeechLabel(card.item.category)} variant="primary" />
-          <Text style={[styles.pattern, { color: colors.onSurface }]}>{card.item.pattern}</Text>
-          <Text style={[styles.summary, { color: colors.onSurfaceVariant }]}>
+          <Text selectable style={[styles.pattern, { color: colors.onSurface }]}>{card.item.pattern}</Text>
+          <Text selectable style={[styles.summary, { color: colors.onSurfaceVariant }]}>
             {card.item.summary}
           </Text>
         </>
@@ -63,10 +64,10 @@ export function ReviewFlashCard({ card, isFlipped, onFlip }: ReviewFlashCardProp
       style={styles.face}
     >
       <Text style={[styles.exampleLabel, { color: colors.onSurfaceVariant }]}>Example</Text>
-      <Text style={[styles.example, { color: colors.onSurface }]}>
+      <Text selectable style={[styles.example, { color: colors.onSurface }]}>
         {card.type === 'main-vocabulary' ? card.item.example : card.item.example}
       </Text>
-      <Text style={[styles.exampleMeaning, { color: colors.primary }]}>
+      <Text selectable style={[styles.exampleMeaning, { color: colors.primary }]}>
         {card.type === 'main-vocabulary' ? card.item.exampleMeaning : card.item.exampleMeaning}
       </Text>
     </Animated.View>
